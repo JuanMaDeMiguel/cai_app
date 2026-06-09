@@ -34,23 +34,28 @@ brightness.
 ## Repository layout
 
 ```
-CAI/
-├── Android/                 Android Studio project (Java app)
-│   └── app/src/main/
-│       ├── AndroidManifest.xml          permissions + light-sensor feature
-│       ├── java/.../MainActivity.java   sensor + Bluetooth client
-│       └── res/layout/activity_main.xml UI
-├── pc/                      Python code that runs on the computer
-│   ├── backlight.py         read/write the screen brightness (sysfs)
-│   ├── bt_server.py         Bluetooth SPP server (main program on the PC)
-│   ├── apply_brightness.py  pipe percentages from stdin (testing)
-│   ├── simulate.py          generate fake brightness/lux data (testing)
-│   └── manual.py            interactive manual brightness test
-├── PLANNING.md              development plan and decision log
-├── CODE.md                  detailed explanation of every part (for the report)
-├── README.md               this file
-└── requirements.txt         PC dependencies
+Android/                          Android Studio project (Java app)
+├── app/src/main/
+│   ├── AndroidManifest.xml          permissions + light-sensor feature
+│   ├── java/.../MainActivity.java   sensor + Bluetooth client
+│   └── res/layout/activity_main.xml UI
+└── pc/                           Python code that runs on the computer
+    ├── src/
+    │   ├── backlight.py             read/write the screen brightness (sysfs)
+    │   ├── bt_server.py             Bluetooth SPP server (main program)
+    │   ├── apply_brightness.py      pipe percentages from stdin (testing)
+    │   ├── simulate.py              generate fake brightness/lux data (testing)
+    │   └── manual.py                interactive manual brightness test
+    ├── gui/
+    │   └── control_panel.py         PyQt6 panel: start/stop the server with buttons
+    ├── PLANNING.md                  development plan and decision log
+    ├── CODE.md                      detailed explanation of every part (report)
+    ├── README.md                    this file
+    └── requirements.txt             PC dependencies
 ```
+
+> Note: `pc/` lives inside `Android/` for now (single repo). The GUI finds
+> `bt_server.py` relative to itself, so the exact location doesn't matter.
 
 ## Requirements
 
@@ -98,9 +103,19 @@ cd Android && ./gradlew installDebug
 
 ## Running
 
+### Option A — GUI (recommended)
+```bash
+pip install PyQt6                 # once, inside the venv
+python pc/gui/control_panel.py
+```
+Click **Start server**, then connect from the phone. The panel shows the
+connection status, the live brightness %, and the server log. **Make discoverable
+for pairing** leaves the PC visible the first time you pair a phone.
+
+### Option B — terminal
 1. Start the server on the PC (system Python):
    ```bash
-   cd pc && /usr/bin/python3 bt_server.py
+   cd pc/src && /usr/bin/python3 bt_server.py
    ```
    It prints `Perfil SPP registrado ... Esperando conexion del telefono...`.
 2. Open the app on the phone, tap **Conectar**, choose the PC, and turn on the
@@ -110,7 +125,7 @@ cd Android && ./gradlew installDebug
 ## Testing the PC side without the phone
 
 ```bash
-cd pc
+cd pc/src
 python3 manual.py                              # type a % and watch it fade
 python3 simulate.py | python3 apply_brightness.py   # automatic sweep
 python3 simulate.py --lux | python3 apply_brightness.py  # simulate lux values

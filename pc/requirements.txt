@@ -1,24 +1,35 @@
-# PC dependencies for the adaptive-brightness server (Linux / Fedora)
+# PC dependencies for the adaptive-brightness project (Linux / Fedora)
 #
-# IMPORTANT: the server (pc/bt_server.py) talks to BlueZ through D-Bus, and the
-# Python bindings for D-Bus / GObject are SYSTEM packages, not pip packages.
-# They are installed with dnf and live in the system Python (/usr/bin/python3).
-# Run the server with the system Python, NOT inside a virtualenv:
+# Layout:
+#   pc/src/   server + brightness scripts (run with the SYSTEM python)
+#   pc/gui/   PyQt6 control panel (optional, launches the server for you)
+#
+# IMPORTANT: the server (pc/src/bt_server.py) talks to BlueZ through D-Bus, and
+# the Python bindings for D-Bus / GObject are SYSTEM packages, not pip packages.
+# They live in the system Python (/usr/bin/python3). Run the server with the
+# system Python, NOT inside a virtualenv:
 #
 #     sudo dnf install bluez python3-dbus python3-gobject
-#     /usr/bin/python3 pc/bt_server.py
+#     /usr/bin/python3 pc/src/bt_server.py
 #
 # System packages (dnf):
 #   bluez             Bluetooth stack + bluetoothctl (usually already installed)
 #   python3-dbus      D-Bus bindings  -> Python module: dbus
 #   python3-gobject   GLib/GObject    -> Python module: gi (GLib main loop)
 #
+# GUI (optional control panel, pc/gui/control_panel.py):
+#   PyQt6  -> pip install PyQt6        (inside the venv)
+#            or: sudo dnf install python3-pyqt6   (system)
+#   The GUI launches bt_server.py as a subprocess with /usr/bin/python3, so it
+#   works no matter which interpreter runs the GUI itself.
+#
 # Everything else used by the project is in the Python standard library:
-#   socket, os, threading, glob, math, sys, time
+#   socket, os, threading, glob, math, sys, time, re
 #
 # ---------------------------------------------------------------------------
-# pip equivalents (only if you cannot use dnf; building them needs dev headers
+# pip-only fallback (if you cannot use dnf; building these needs dev headers
 # such as dbus-devel, glib2-devel, cairo-devel, gobject-introspection-devel):
 #
 # dbus-python
 # PyGObject
+# PyQt6

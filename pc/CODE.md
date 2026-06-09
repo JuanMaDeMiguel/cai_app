@@ -99,6 +99,27 @@ Permiten validar el lado PC sin el teléfono. Todos terminan llamando a
 - `manual.py`: prueba **interactiva**. Escribís un % y la pantalla hace fade.
   Útil para demostrar `fade_to` en vivo.
 
+Todos estos viven en `pc/src/`.
+
+### 2.4 `gui/control_panel.py` — panel de control (PyQt6)
+Interfaz gráfica para no depender de la terminal. **No reimplementa el server**:
+lo lanza como **subproceso** y muestra su salida. Esto evita el choque entre el
+bucle de eventos de Qt y el de GLib (cada uno corre en su propio proceso).
+
+- `find_server()`: localiza `bt_server.py` (primero relativo al script, ya que
+  `gui/` y `src/` son hermanos).
+- **Botón "Start server"**: lanza `/usr/bin/python3 -u bt_server.py` con un
+  `QProcess` y cambia a "Stop server". Se usa `/usr/bin/python3` porque es el que
+  tiene `dbus` (el venv no), sin importar con qué intérprete corra la GUI.
+- `on_output()`: lee la salida del server línea por línea y la vuelca al registro.
+  Con una expresión regular detecta el `-> NN%` y actualiza el número grande de
+  brillo, y detecta `[+] Conectado` / `[-] Desconectado` para el estado.
+- **Botón "Make discoverable for pairing"**: corre `bluetoothctl` para dejar la
+  PC visible y emparejable (solo hace falta la primera vez por teléfono).
+- `closeEvent()`: detiene el server al cerrar la ventana.
+
+Requiere `PyQt6` (pip en el venv) o `python3-pyqt6` (dnf).
+
 ---
 
 ## 3. Lado Android (carpeta `Android/app/src/main/`)
@@ -185,11 +206,12 @@ Es el corazón de la app. Implementa `SensorEventListener`. Partes:
 
 | Archivo | Lado | Rol |
 |---|---|---|
-| `pc/backlight.py` | PC | Lee/escribe el brillo (sysfs), con fade |
-| `pc/bt_server.py` | PC | Servidor Bluetooth SPP (programa principal) |
-| `pc/apply_brightness.py` | PC | Prueba: aplica % desde stdin |
-| `pc/simulate.py` | PC | Prueba: genera datos (curva log) |
-| `pc/manual.py` | PC | Prueba: interactivo |
+| `pc/src/backlight.py` | PC | Lee/escribe el brillo (sysfs), con fade |
+| `pc/src/bt_server.py` | PC | Servidor Bluetooth SPP (programa principal) |
+| `pc/src/apply_brightness.py` | PC | Prueba: aplica % desde stdin |
+| `pc/src/simulate.py` | PC | Prueba: genera datos (curva log) |
+| `pc/src/manual.py` | PC | Prueba: interactivo |
+| `pc/gui/control_panel.py` | PC | GUI PyQt6: inicia/detiene el server con botones |
 | `Android/.../AndroidManifest.xml` | Android | Permisos y feature del sensor |
 | `Android/.../res/layout/activity_main.xml` | Android | Interfaz |
 | `Android/.../java/.../MainActivity.java` | Android | Sensor + cliente Bluetooth |

@@ -147,12 +147,21 @@ PyBluez NO sirve (Python 3.14). Solución final:
      `ExecutorService`, permiso runtime para Android 12+, selector de dispositivo
      emparejado. Se quitó `cancelDiscovery()` (exigía BLUETOOTH_SCAN).
      Warning menor: `getDefaultAdapter()` deprecado (funciona).
-6. **Pulir (pendiente):** reconexión automática, ajuste de curva, (opcional)
+6. ✅ **GUI de la PC (PyQt6, HECHO, sencilla):** `pc/gui/control_panel.py`.
+   Botones para iniciar/detener el server y para hacer la PC visible/emparejable,
+   sin terminal. Lanza `bt_server.py` como **subproceso** con `/usr/bin/python3`
+   (evita el choque loop Qt vs GLib) y muestra estado, brillo en vivo y log.
+   Requiere `PyQt6` (pip en venv) o `python3-pyqt6` (dnf). Pendiente: hacerla más
+   linda.
+7. **Pulir (pendiente):** reconexión automática, ajuste de curva, (opcional)
    Foreground Service para seguir en background, autostart del server con systemd.
+
+## Estructura actual
+`pc/src/` = scripts (server + brillo), `pc/gui/` = GUI PyQt6, `pc/*.md` + `requirements.txt`.
 
 ## Estado: ✅ FUNCIONA END-TO-END
 Sensor del teléfono → app → Bluetooth SPP → `bt_server.py` → brillo de la PC
-sigue la luz ambiente en tiempo real, con fade suave.
+sigue la luz ambiente en tiempo real, con fade suave. GUI opcional para arrancar todo.
 
 ## Riesgos conocidos
 
