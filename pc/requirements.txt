@@ -1,0 +1,24 @@
+# PC dependencies for the adaptive-brightness server (Linux / Fedora)
+#
+# IMPORTANT: the server (pc/bt_server.py) talks to BlueZ through D-Bus, and the
+# Python bindings for D-Bus / GObject are SYSTEM packages, not pip packages.
+# They are installed with dnf and live in the system Python (/usr/bin/python3).
+# Run the server with the system Python, NOT inside a virtualenv:
+#
+#     sudo dnf install bluez python3-dbus python3-gobject
+#     /usr/bin/python3 pc/bt_server.py
+#
+# System packages (dnf):
+#   bluez             Bluetooth stack + bluetoothctl (usually already installed)
+#   python3-dbus      D-Bus bindings  -> Python module: dbus
+#   python3-gobject   GLib/GObject    -> Python module: gi (GLib main loop)
+#
+# Everything else used by the project is in the Python standard library:
+#   socket, os, threading, glob, math, sys, time
+#
+# ---------------------------------------------------------------------------
+# pip equivalents (only if you cannot use dnf; building them needs dev headers
+# such as dbus-devel, glib2-devel, cairo-devel, gobject-introspection-devel):
+#
+# dbus-python
+# PyGObject
