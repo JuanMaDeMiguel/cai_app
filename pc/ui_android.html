@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI Android · Cómo se hizo el rediseño</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-code: #0a0e14;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #d29922;
+    --danger: #f85149;
+    --kw: #ff7b72;
+    --str: #a5d6ff;
+    --com: #8b949e;
+    --fn: #d2a8ff;
+    --num: #79c0ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    font-size: 16px;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  nav.sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav .brand {
+    padding: 0 24px 16px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  nav .brand small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; margin-top: 4px; }
+  nav a {
+    display: block;
+    padding: 6px 24px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .9rem;
+    border-left: 2px solid transparent;
+  }
+  nav a:hover { color: var(--text); background: rgba(88,166,255,.06); }
+  nav a.section { margin-top: 14px; color: var(--text); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+  nav a.sub { padding-left: 38px; font-size: .85rem; }
+
+  main {
+    flex: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 56px 120px;
+  }
+  h1 { font-size: 2.1rem; margin: 0 0 6px; line-height: 1.2; }
+  h1 + .subtitle { color: var(--muted); font-size: 1.1rem; margin: 0 0 28px; }
+  h2 {
+    font-size: 1.5rem;
+    margin: 56px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 24px;
+  }
+  h3 { font-size: 1.18rem; margin: 32px 0 10px; scroll-margin-top: 24px; }
+  h4 { font-size: 1rem; margin: 22px 0 8px; color: var(--accent); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  code:not(pre code) {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: .1em .4em;
+    border-radius: 5px;
+    font-size: .86em;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    color: #ffa657;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  .filehdr {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 14px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: .82rem;
+    color: var(--muted);
+  }
+  .filehdr .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .filehdr .tag { margin-left: auto; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 20px; background: rgba(88,166,255,.12); color: var(--accent); }
+  pre {
+    margin: 0 0 24px;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: .82rem;
+    line-height: 1.55;
+  }
+  pre.standalone { border-radius: 8px; margin-top: 4px; }
+  pre code { font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; color: #c9d1d9; }
+  .k { color: var(--kw); }
+  .s { color: var(--str); }
+  .c { color: var(--com); font-style: italic; }
+  .f { color: var(--fn); }
+  .n { color: var(--num); }
+  .t { color: #7ee787; }
+
+  pre.diagram { color: var(--accent); background: #08111e; border-color: #1f3a5f; }
+
+  .note {
+    border-left: 4px solid var(--accent);
+    background: rgba(88,166,255,.07);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 18px 0;
+  }
+  .note.warn { border-color: var(--warn); background: rgba(210,153,34,.08); }
+  .note.danger { border-color: var(--danger); background: rgba(248,81,73,.08); }
+  .note.ok { border-color: var(--accent2); background: rgba(63,185,80,.08); }
+  .note .lbl { font-weight: 700; display: block; margin-bottom: 4px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: .9rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--bg-soft); }
+  td code { font-size: .82em; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin: 24px 0; }
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .card .lab { color: var(--muted); font-size: .82rem; }
+
+  .pdfref { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:600; background: rgba(210,153,34,.14); color: var(--warn); border:1px solid rgba(210,153,34,.35); text-decoration:none; }
+  .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.78rem; font-weight:600; }
+  .pill.green { background: rgba(63,185,80,.15); color: var(--accent2); }
+
+  @media (max-width: 900px) {
+    nav.sidebar { display: none; }
+    main { padding: 28px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="sidebar">
+  <div class="brand">🎨 UI Android<small>Rediseño de la interfaz · Java + XML</small></div>
+
+  <a href="#intro" class="section">Punto de partida</a>
+  <a href="#antesdespues" class="sub">Antes y después</a>
+  <a href="#filosofia" class="sub">Filosofía del rediseño</a>
+
+  <a href="#fundamentos" class="section">Fundamentos (cátedra)</a>
+  <a href="#viewgroup" class="sub">View y ViewGroup</a>
+  <a href="#widget" class="sub">Widgets</a>
+  <a href="#xml" class="sub">Declaración XML</a>
+  <a href="#recursos" class="sub">R.java y recursos</a>
+
+  <a href="#contrato" class="section">La restricción clave</a>
+  <a href="#findviewbyid" class="sub">El contrato findViewById</a>
+  <a href="#nativos" class="sub">Por qué Button/Switch nativos</a>
+
+  <a href="#color" class="section">Sistema de color</a>
+  <a href="#colorsxml" class="sub">colors.xml</a>
+  <a href="#themes" class="sub">themes.xml (tokens)</a>
+  <a href="#attr" class="sub">?attr/ vs @color</a>
+  <a href="#night" class="sub">Modo oscuro</a>
+
+  <a href="#layout" class="section">El layout</a>
+  <a href="#estructura" class="sub">Estructura general</a>
+  <a href="#tarjeta" class="sub">Tarjeta de lectura</a>
+  <a href="#estado" class="sub">Fila de estado y switch</a>
+
+  <a href="#drawable" class="section">Iconos vectoriales</a>
+  <a href="#strings" class="section">Strings y francés</a>
+  <a href="#sensor" class="section">Conexión con el sensor</a>
+
+  <a href="#dominar" class="section">Para dominar el código</a>
+  <a href="#archivos" class="section">Mapa de archivos</a>
+</nav>
+
+<main>
+
+<h1>Rediseño de la UI Android</h1>
+<p class="subtitle">Cómo se transformó la pantalla de la app — paso a paso, en XML y Java — relacionado con la presentación de la cátedra (<em>Programmation de systèmes mobiles — ANDROID</em>, C. Buche, ENIB).</p>
+
+<div class="note">
+  <span class="lbl">Cómo leer este documento</span>
+  Cada concepto del rediseño está anclado a la diapositiva del PDF donde la cátedra lo introduce. Cuando veas una etiqueta como <a class="pdfref">PDF · p.32</a> es el número de página del archivo <code>cours_android_cb.pdf</code>. La idea es que puedas ir del slide teórico → al código real de esta app.
+</div>
+
+<div class="cards">
+  <div class="card"><div class="big">5</div><div class="lab">archivos de recurso tocados</div></div>
+  <div class="card"><div class="big">0</div><div class="lab">líneas de lógica modificadas</div></div>
+  <div class="card"><div class="big">M3</div><div class="lab">Material 3 (Material Design)</div></div>
+  <div class="card"><div class="big">FR</div><div class="lab">textos en francés</div></div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="intro">1 · Punto de partida</h2>
+
+<p>La app tiene un único propósito: leer el <strong>sensor de luz ambiente</strong> del teléfono, convertirlo a un porcentaje de brillo y enviarlo por Bluetooth a la PC. Es una <em>utilidad</em>, no una app de contenido. Eso condiciona el diseño: claridad por encima de adornos.</p>
+
+<h3 id="antesdespues">Antes y después</h3>
+<p>La versión original era un <code>ConstraintLayout</code> con cuatro <code>TextView</code>, un <code>Button</code> y un <code>Switch</code> apilados contra el borde superior izquierdo, sin jerarquía visual ni color. Funcionaba, pero "se veía como el editor de Android Studio recién creado".</p>
+
+<p>El rediseño mantiene <strong>exactamente la misma funcionalidad</strong> y reorganiza la información en torno al dato importante (el porcentaje), con una tarjeta destacada, una paleta Material 3 y soporte de modo oscuro.</p>
+
+<table>
+  <tr><th>Antes</th><th>Después</th></tr>
+  <tr><td>Textos pegados arriba a la izquierda</td><td>Columna centrada con ancho máximo (480dp)</td></tr>
+  <tr><td>Sin color de marca</td><td>Paleta índigo Material 3 (claro + oscuro)</td></tr>
+  <tr><td>El <code>%</code> con el mismo peso que todo</td><td>El <code>%</code> destacado en una tarjeta</td></tr>
+  <tr><td>Textos "cableados" en el XML</td><td>Textos en <code>strings.xml</code> (en francés)</td></tr>
+</table>
+
+<h3 id="filosofia">Filosofía del rediseño</h3>
+<ul>
+  <li><strong>Sobrio y elegante.</strong> Un único color de acento, mucho espacio en blanco, esquinas redondeadas. Nada de gradientes ni animaciones.</li>
+  <li><strong>Material Design.</strong> Usamos el tema <code>Theme.Material3.DayNight</code> y sus <em>tokens</em> de color, como recomienda la práctica moderna de Android.</li>
+  <li><strong>Que parezca hecho a mano.</strong> Recursos separados (colores, strings, drawables) y referencias por atributo de tema — justo el flujo que enseña la cátedra <a class="pdfref" href="#recursos">PDF · p.33-36</a>.</li>
+  <li><strong>Backend intacto.</strong> Ni una línea de lógica modificada. Esto es una restricción, no un lujo, y dirige varias decisiones (ver §3).</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="fundamentos">2 · Fundamentos de la cátedra que usamos</h2>
+<p>Antes del código conviene fijar el vocabulario del PDF, porque todo el rediseño es una aplicación directa de estos conceptos.</p>
+
+<h3 id="viewgroup">View y ViewGroup <a class="pdfref">PDF · p.28-29</a></h3>
+<p>La cátedra introduce la jerarquía base de la interfaz gráfica:</p>
+<pre class="diagram standalone">                 ┌─────────────┐
+                 │    View     │   ← unidad mínima dibujable
+                 └──────┬──────┘
+            ┌───────────┴───────────┐
+      ┌─────┴──────┐          ┌──────┴──────┐
+      │ ViewGroup  │          │   Widget    │
+      │ (Layout)   │          │ (Button…)   │
+      └─────┬──────┘          └─────────────┘
+            │ contiene Views
+            ▼
+   LinearLayout · RelativeLayout · ListView · ...</pre>
+<ul>
+  <li>Una <strong>View</strong> es cualquier elemento dibujable (un texto, un botón).</li>
+  <li>Un <strong>ViewGroup</strong> es una View que <em>contiene</em> otras Views: es un <em>layout</em>. La p.29 lista los tipos: <code>LinearLayout</code>, <code>RelativeLayout</code>, <code>ListView</code>, <code>GridView</code>…</li>
+</ul>
+<p>En el rediseño anidamos ViewGroups: un <code>ConstraintLayout</code> raíz, dentro un <code>LinearLayout</code> vertical, y dentro tarjetas (<code>MaterialCardView</code>, que también es un ViewGroup) con más <code>LinearLayout</code>. Esa composición "cajas dentro de cajas" es exactamente el modelo de la diapositiva.</p>
+
+<h3 id="widget">Widgets <a class="pdfref">PDF · p.31</a></h3>
+<p>La p.31 muestra el catálogo de widgets: <em>Button, TextField, slider, checkbox, radio, <strong>switch</strong></em>… Nuestra pantalla usa tres familias: <code>TextView</code> (mostrar datos), <code>Button</code> (acción conectar) y <code>Switch</code> (envío automático). El <code>ImageView</code> de los iconos también es un widget.</p>
+
+<h3 id="xml">Declaración XML del layout <a class="pdfref">PDF · p.32</a></h3>
+<p>La cátedra contrapone dos formas de construir la UI:</p>
+<ol>
+  <li><strong>Por código Java</strong> <a class="pdfref">PDF · p.30</a>: <code>new LinearLayout(this)</code>, <code>l.addView(t)</code>, <code>setContentView(l)</code>.</li>
+  <li><strong>Declarativa en XML</strong> <a class="pdfref">PDF · p.32</a>: se describe el árbol en un <code>.xml</code> y en la Activity se hace <code>setContentView(R.layout.main)</code>.</li>
+</ol>
+<p>Usamos la forma declarativa (la recomendada): toda la pantalla vive en <code>res/layout/activity_main.xml</code> y <code>MainActivity</code> solo hace <code>setContentView(R.layout.activity_main)</code>. Comparen el esqueleto del slide con nuestro archivo: es el mismo patrón <code>&lt;LinearLayout orientation="vertical"&gt;</code> con hijos dentro.</p>
+
+<h3 id="recursos">R.java y recursos <a class="pdfref">PDF · p.33-36</a></h3>
+<p>Este es el corazón teórico del rediseño. La cátedra explica:</p>
+<ul>
+  <li><a class="pdfref">p.33</a> Todo lo que ponés en <code>/res</code> genera entradas en <code>R.java</code> (que <em>no se toca a mano</em>). Por eso podemos escribir <code>R.layout.activity_main</code>, <code>R.id.brightnessText</code>, <code>R.drawable.ic_bluetooth</code>.</li>
+  <li><a class="pdfref">p.34-35</a> Tipos de recurso por carpeta: <code>values-[qualifier]/</code> (textos, estilos, dimensiones), <code>color/</code>, <code>drawable-[qualifier]/</code>, <code>layout-[qualifier]/</code>. El <em>qualifier</em> es lo que hace que <code>values-night/</code> sea el modo oscuro.</li>
+  <li><a class="pdfref">p.36</a> "Exploiter les ressources": referenciar un recurso desde otro con <code>"@color/..."</code> o <code>"@string/..."</code>, e incluso recursos del sistema con <code>"@android:color/..."</code>.</li>
+</ul>
+<p>El rediseño es, esencialmente, <strong>poner en práctica la p.36</strong>: en lugar de cablear <code>android:text="Conectar"</code> y colores en hexadecimal dentro del layout, definimos los recursos una vez y los referenciamos. Eso es lo que lo hace mantenible y traducible.</p>
+
+<!-- ============================================================ -->
+<h2 id="contrato">3 · La restricción clave: no tocar el backend</h2>
+
+<h3 id="findviewbyid">El "contrato" findViewById</h3>
+<p>La Activity y el layout están unidos por los <code>id</code>. En Java se hace:</p>
+
+<div class="filehdr"><span class="dot" style="background:#f0883e"></span> MainActivity.java <span class="tag">java</span></div>
+<pre><code><span class="k">private</span> <span class="t">TextView</span> luxText, brightnessText, statusText;
+<span class="k">private</span> <span class="t">Button</span> connectButton;
+<span class="k">private</span> <span class="t">Switch</span> sendSwitch;
+<span class="c">// ...</span>
+brightnessText = findViewById(<span class="t">R</span>.id.<span class="n">brightnessText</span>);
+connectButton  = findViewById(<span class="t">R</span>.id.<span class="n">connectButton</span>);
+sendSwitch     = findViewById(<span class="t">R</span>.id.<span class="n">sendSwitch</span>);</code></pre>
+
+<p><code>findViewById</code> busca en el árbol del layout una View con ese <code>id</code> y la <em>castea</em> al tipo de la variable. De ahí salen dos reglas que el rediseño respeta a rajatabla:</p>
+<ol>
+  <li>Los <code>id</code> deben seguir existiendo y con el mismo nombre: <code>main</code>, <code>luxText</code>, <code>brightnessText</code>, <code>statusText</code>, <code>connectButton</code>, <code>sendSwitch</code>.</li>
+  <li>El <strong>tipo</strong> de la View en el XML debe ser compatible con el tipo declarado en Java, o el cast revienta en tiempo de ejecución.</li>
+</ol>
+
+<h3 id="nativos">Por qué se conservan Button y Switch "nativos"</h3>
+<p>Material 3 ofrece widgets más lindos como <code>com.google.android.material.materialswitch.MaterialSwitch</code>. Pero el Java declara <code>android.widget.Switch</code>, y <code>MaterialSwitch</code> <strong>no hereda</strong> de <code>android.widget.Switch</code> (hereda de <code>CompoundButton</code> por otra rama). Si pusiéramos un <code>MaterialSwitch</code> en el XML, esta línea:</p>
+<pre class="standalone"><code>sendSwitch = findViewById(R.id.sendSwitch);  <span class="c">// ClassCastException 💥</span></code></pre>
+<p>fallaría con <code>ClassCastException</code>. Como la consigna era <em>no tocar el backend</em>, mantuvimos <code>&lt;Switch&gt;</code> y <code>&lt;Button&gt;</code> nativos.</p>
+
+<div class="note ok">
+  <span class="lbl">El truco: estilar por tema, no por widget</span>
+  Aunque sean widgets "viejos", al estar bajo <code>Theme.Material3</code> el sistema les aplica automáticamente el estilo Material: el <code>&lt;Button&gt;</code> sale relleno y con esquinas redondeadas, y el <code>&lt;Switch&gt;</code> usa <code>colorPrimary</code> al activarse. Conseguimos el look de Material sin cambiar la clase del widget. Esto es justo la idea de la p.36: el aspecto vive en los recursos/tema, no incrustado en cada elemento.
+</div>
+
+<table>
+  <tr><th>Variable Java</th><th>Tipo declarado</th><th>Etiqueta XML usada</th></tr>
+  <tr><td><code>luxText</code> / <code>brightnessText</code> / <code>statusText</code></td><td><code>TextView</code></td><td><code>&lt;TextView&gt;</code></td></tr>
+  <tr><td><code>connectButton</code></td><td><code>android.widget.Button</code></td><td><code>&lt;Button&gt;</code></td></tr>
+  <tr><td><code>sendSwitch</code></td><td><code>android.widget.Switch</code></td><td><code>&lt;Switch&gt;</code></td></tr>
+  <tr><td>(contenedores)</td><td>— no referenciados en Java —</td><td><code>&lt;MaterialCardView&gt;</code>, <code>&lt;LinearLayout&gt;</code> libres</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="color">4 · El sistema de color (Material 3)</h2>
+
+<p>Material Design define <em>tokens</em> de color con roles semánticos (no "azul", sino "color primario", "color de superficie"…). En vez de pintar cada View con un hexadecimal, asignás colores a roles y luego usás el rol. Esto es la versión Material de la p.36 de la cátedra.</p>
+
+<h3 id="colorsxml">Paso 1 — definir los colores · <code>res/values/colors.xml</code></h3>
+<p>Primero los valores crudos. Elegimos un índigo apagado (sobrio) y declaramos también la variante oscura:</p>
+<div class="filehdr"><span class="dot" style="background:#3fb950"></span> res/values/colors.xml <span class="tag">xml</span></div>
+<pre><code><span class="c">&lt;!-- Paleta clara (Material 3) --&gt;</span>
+&lt;<span class="t">color</span> <span class="f">name</span>=<span class="s">"primary"</span>&gt;<span class="s">#4255A4</span>&lt;/<span class="t">color</span>&gt;
+&lt;<span class="t">color</span> <span class="f">name</span>=<span class="s">"on_primary"</span>&gt;<span class="s">#FFFFFF</span>&lt;/<span class="t">color</span>&gt;
+&lt;<span class="t">color</span> <span class="f">name</span>=<span class="s">"primary_container"</span>&gt;<span class="s">#DEE0FF</span>&lt;/<span class="t">color</span>&gt;
+&lt;<span class="t">color</span> <span class="f">name</span>=<span class="s">"on_primary_container"</span>&gt;<span class="s">#00115B</span>&lt;/<span class="t">color</span>&gt;
+&lt;<span class="t">color</span> <span class="f">name</span>=<span class="s">"surface"</span>&gt;<span class="s">#FFFFFF</span>&lt;/<span class="t">color</span>&gt;
+<span class="c">&lt;!-- … y las versiones _dark para el modo oscuro --&gt;</span></code></pre>
+<p>El convenio <code>primary</code> / <code>on_primary</code> es de Material: <em>on_X</em> es el color del texto/icono que va <em>encima</em> de <em>X</em>. Por eso el número grande de brillo (que va sobre <code>primary_container</code>) usa <code>on_primary_container</code> y siempre tiene contraste suficiente.</p>
+
+<h3 id="themes">Paso 2 — asignar colores a roles · <code>res/values/themes.xml</code></h3>
+<p>El tema conecta cada color crudo con su <em>token</em> de Material. Aquí es donde un hexadecimal pasa a ser "el color primario de la app":</p>
+<div class="filehdr"><span class="dot" style="background:#3fb950"></span> res/values/themes.xml <span class="tag">xml</span></div>
+<pre><code>&lt;<span class="t">style</span> <span class="f">name</span>=<span class="s">"Base.Theme.Cai_app"</span>
+       <span class="f">parent</span>=<span class="s">"Theme.Material3.DayNight.NoActionBar"</span>&gt;
+    &lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorPrimary"</span>&gt;<span class="s">@color/primary</span>&lt;/<span class="t">item</span>&gt;
+    &lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorOnPrimary"</span>&gt;<span class="s">@color/on_primary</span>&lt;/<span class="t">item</span>&gt;
+    &lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorPrimaryContainer"</span>&gt;<span class="s">@color/primary_container</span>&lt;/<span class="t">item</span>&gt;
+    &lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorOnSurfaceVariant"</span>&gt;<span class="s">@color/on_surface_variant</span>&lt;/<span class="t">item</span>&gt;
+    <span class="c">&lt;!-- … --&gt;</span>
+&lt;/<span class="t">style</span>&gt;</code></pre>
+<p>Fijate en la cadena de referencias <a class="pdfref" href="#recursos">PDF · p.36</a>: el layout dirá <code>?attr/colorPrimary</code> → el tema dice que eso es <code>@color/primary</code> → <code>colors.xml</code> dice que eso es <code>#4255A4</code>. Tres niveles de indirección, y cada uno se puede cambiar sin tocar los otros.</p>
+
+<h3 id="attr">Paso 3 — usar el color: <code>?attr/</code> vs <code>@color/</code></h3>
+<p>Diferencia clave que conviene dominar:</p>
+<table>
+  <tr><th>Sintaxis</th><th>Qué hace</th><th>Cuándo usarla</th></tr>
+  <tr><td><code>@color/primary</code></td><td>Apunta al hexadecimal fijo en <code>colors.xml</code>.</td><td>Casi nunca directamente en el layout: ignora el tema.</td></tr>
+  <tr><td><code>?attr/colorPrimary</code></td><td>"Preguntá al tema activo qué color juega este rol ahora". En modo oscuro devuelve otro valor.</td><td>Siempre en el layout, para que cambie solo con claro/oscuro.</td></tr>
+</table>
+<p>Por eso en <code>activity_main.xml</code> todos los colores son <code>?attr/...</code> y no <code>@color/...</code>: así el mismo layout se ve bien en ambos modos sin duplicar nada.</p>
+
+<h3 id="night">Paso 4 — modo oscuro con un <em>qualifier</em> · <code>res/values-night/</code></h3>
+<p>La p.34 menciona <code>values-[qualifier]</code>. El qualifier <code>-night</code> es la pieza mágica: Android elige automáticamente <code>values-night/themes.xml</code> cuando el sistema está en modo oscuro. Tiene el <strong>mismo nombre de estilo</strong> pero apunta a los colores <code>_dark</code>:</p>
+<div class="filehdr"><span class="dot" style="background:#3fb950"></span> res/values-night/themes.xml <span class="tag">xml · qualifier</span></div>
+<pre><code>&lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorPrimary"</span>&gt;<span class="s">@color/primary_dark</span>&lt;/<span class="t">item</span>&gt;
+&lt;<span class="t">item</span> <span class="f">name</span>=<span class="s">"colorPrimaryContainer"</span>&gt;<span class="s">@color/primary_container_dark</span>&lt;/<span class="t">item</span>&gt;</code></pre>
+<p>No escribimos ni una línea de Java para esto: es puro mecanismo de recursos de la cátedra. El layout, que pide <code>?attr/colorPrimary</code>, recibe un valor distinto según el sistema operativo.</p>
+
+<!-- ============================================================ -->
+<h2 id="layout">5 · El layout · <code>res/layout/activity_main.xml</code></h2>
+
+<h3 id="estructura">Estructura general</h3>
+<p>El árbol de Views, simplificado, queda así (cada sangría es un ViewGroup que contiene al siguiente, el modelo de la p.28):</p>
+<pre class="diagram standalone">ConstraintLayout  (id=main)        ← raíz; recibe el padding de las barras del sistema
+└─ LinearLayout vertical           ← columna centrada, ancho máx 480dp
+   ├─ TextView   título
+   ├─ TextView   subtítulo
+   ├─ MaterialCardView              ← TARJETA DE LECTURA (color primaryContainer)
+   │  └─ LinearLayout vertical
+   │     ├─ LinearLayout (icono ☀ + "LUMINOSITÉ")
+   │     ├─ TextView  id=brightnessText   "–– %"   (64sp)
+   │     └─ TextView  id=luxText          "Lux : –"
+   ├─ LinearLayout (icono ᛒ + TextView id=statusText)
+   ├─ Button   id=connectButton           "Connecter"
+   └─ MaterialCardView (borde)            ← FILA DEL SWITCH
+      └─ LinearLayout horizontal
+         ├─ TextView  "Envoyer la luminosité…"  (weight=1)
+         └─ Switch   id=sendSwitch</pre>
+
+<p>Dos detalles de diseño que vale la pena entender:</p>
+<ul>
+  <li><strong>El <code>ConstraintLayout</code> raíz mantiene el <code>id=main</code></strong> porque <code>MainActivity</code> lo usa para aplicar el <em>padding</em> de las barras de sistema (modo <em>edge-to-edge</em>). No lo podíamos renombrar ni quitar.</li>
+  <li><strong>El ancho máximo</strong> se logra con <code>layout_width="0dp"</code> + <code>app:layout_constraintWidth_max="480dp"</code> + anclajes a izquierda y derecha. En un teléfono ocupa todo; en una tablet se queda centrado y no se estira feo.</li>
+</ul>
+
+<h3 id="tarjeta">La tarjeta de lectura (el corazón visual)</h3>
+<p>Toda la jerarquía visual gira en torno al porcentaje. Lo metimos en una <code>MaterialCardView</code> con color de fondo <code>colorPrimaryContainer</code>, esquinas de 28dp y sin sombra (elevation 0 = más sobrio):</p>
+<div class="filehdr"><span class="dot" style="background:#58a6ff"></span> res/layout/activity_main.xml <span class="tag">xml</span></div>
+<pre><code>&lt;<span class="t">com.google.android.material.card.MaterialCardView</span>
+    <span class="f">android:layout_width</span>=<span class="s">"match_parent"</span>
+    <span class="f">android:layout_height</span>=<span class="s">"wrap_content"</span>
+    <span class="f">app:cardBackgroundColor</span>=<span class="s">"?attr/colorPrimaryContainer"</span>
+    <span class="f">app:cardCornerRadius</span>=<span class="s">"28dp"</span>
+    <span class="f">app:cardElevation</span>=<span class="s">"0dp"</span>&gt;
+
+    &lt;<span class="t">LinearLayout</span> <span class="f">android:orientation</span>=<span class="s">"vertical"</span>
+        <span class="f">android:padding</span>=<span class="s">"28dp"</span>&gt;
+
+        <span class="c">&lt;!-- fila icono ☀ + etiqueta LUMINOSITÉ --&gt;</span>
+
+        &lt;<span class="t">TextView</span>
+            <span class="f">android:id</span>=<span class="s">"@+id/brightnessText"</span>
+            <span class="f">android:text</span>=<span class="s">"@string/placeholder_percent"</span>
+            <span class="f">android:textColor</span>=<span class="s">"?attr/colorOnPrimaryContainer"</span>
+            <span class="f">android:textSize</span>=<span class="s">"64sp"</span>
+            <span class="f">android:textStyle</span>=<span class="s">"bold"</span> /&gt;
+
+        &lt;<span class="t">TextView</span> <span class="f">android:id</span>=<span class="s">"@+id/luxText"</span>
+            <span class="f">android:text</span>=<span class="s">"@string/placeholder_lux"</span>
+            <span class="f">android:textColor</span>=<span class="s">"?attr/colorOnPrimaryContainer"</span> /&gt;
+    &lt;/<span class="t">LinearLayout</span>&gt;
+&lt;/<span class="t">com.google.android.material.card.MaterialCardView</span>&gt;</code></pre>
+<p>Anatomía de una línea, para no perder detalle:</p>
+<ul>
+  <li><code>@+id/brightnessText</code> — el <code>+</code> significa "creá este id en R.java". Como ya existía y Java lo usa, el nombre es obligatorio <a class="pdfref" href="#findviewbyid">§3</a>.</li>
+  <li><code>@string/placeholder_percent</code> — el texto inicial sale de <code>strings.xml</code>, no cableado <a class="pdfref" href="#recursos">PDF · p.36</a>. Java lo sobrescribe en cuanto llega un valor del sensor.</li>
+  <li><code>?attr/colorOnPrimaryContainer</code> — color por rol, sensible al modo oscuro <a class="pdfref" href="#attr">§4</a>.</li>
+  <li><code>64sp</code> — tamaño en <code>sp</code> (<em>scale-independent pixels</em>): respeta el tamaño de fuente del sistema. Para textos siempre <code>sp</code>; para márgenes/tamaños de caja, <code>dp</code>.</li>
+</ul>
+
+<h3 id="estado">Fila de estado, botón y switch</h3>
+<p>Debajo de la tarjeta hay tres bloques. El de estado es un <code>LinearLayout</code> horizontal con un icono Bluetooth y el <code>TextView</code> de estado:</p>
+<pre><code>&lt;<span class="t">LinearLayout</span> <span class="f">android:orientation</span>=<span class="s">"horizontal"</span>
+    <span class="f">android:gravity</span>=<span class="s">"center_vertical"</span>&gt;
+    &lt;<span class="t">ImageView</span> <span class="f">android:src</span>=<span class="s">"@drawable/ic_bluetooth"</span>
+        <span class="f">app:tint</span>=<span class="s">"?attr/colorOnSurfaceVariant"</span> /&gt;
+    &lt;<span class="t">TextView</span> <span class="f">android:id</span>=<span class="s">"@+id/statusText"</span>
+        <span class="f">android:text</span>=<span class="s">"@string/status_disconnected"</span> /&gt;
+&lt;/<span class="t">LinearLayout</span>&gt;</code></pre>
+
+<p>El botón es full-width (<code>layout_width="match_parent"</code>) y, como vimos en §3, sigue siendo un <code>&lt;Button&gt;</code> que el tema Material estila solo. La fila del switch usa una <code>MaterialCardView</code> con borde (<code>strokeWidth</code>) en lugar de fondo, para agruparlo visualmente sin agregar peso. El <code>android:layout_weight="1"</code> en el texto empuja el <code>Switch</code> al extremo derecho:</p>
+<pre><code>&lt;<span class="t">TextView</span> <span class="f">android:layout_width</span>=<span class="s">"0dp"</span>
+    <span class="f">android:layout_weight</span>=<span class="s">"1"</span>
+    <span class="f">android:text</span>=<span class="s">"@string/label_auto_send"</span> /&gt;
+&lt;<span class="t">Switch</span> <span class="f">android:id</span>=<span class="s">"@+id/sendSwitch"</span>
+    <span class="f">android:enabled</span>=<span class="s">"false"</span> /&gt;</code></pre>
+<div class="note">
+  <span class="lbl">Por qué <code>layout_weight</code></span>
+  En un <code>LinearLayout</code>, <code>weight</code> reparte el espacio sobrante. Darle peso 1 al texto (con ancho 0dp) hace que el texto ocupe todo lo que sobra y el switch quede pegado a la derecha. Es el patrón estándar "etiqueta a la izquierda, control a la derecha".
+</div>
+
+<!-- ============================================================ -->
+<h2 id="drawable">6 · Iconos vectoriales · <code>res/drawable/</code></h2>
+<p>La p.35 lista <code>drawable-[qualifier]/</code> como carpeta de "ficheros bitmap (PNG/JPEG) o XML que describen objetos dibujables". Usamos la segunda opción: <strong>vectores</strong> (<code>VectorDrawable</code>), que escalan sin pixelarse y pesan nada. Cada icono es un <code>&lt;path&gt;</code> con datos SVG:</p>
+<div class="filehdr"><span class="dot" style="background:#d2a8ff"></span> res/drawable/ic_bluetooth.xml <span class="tag">xml · vector</span></div>
+<pre><code>&lt;<span class="t">vector</span> <span class="f">android:width</span>=<span class="s">"20dp"</span> <span class="f">android:height</span>=<span class="s">"20dp"</span>
+    <span class="f">android:viewportWidth</span>=<span class="s">"24"</span> <span class="f">android:viewportHeight</span>=<span class="s">"24"</span>&gt;
+    &lt;<span class="t">path</span> <span class="f">android:fillColor</span>=<span class="s">"@android:color/white"</span>
+          <span class="f">android:pathData</span>=<span class="s">"M17.71,7.71L12,2h-1v7.59…"</span> /&gt;
+&lt;/<span class="t">vector</span>&gt;</code></pre>
+<p>El relleno se declara blanco, pero en el layout lo teñimos con <code>app:tint="?attr/colorOnSurfaceVariant"</code>. Así el icono respeta el tema (claro/oscuro) sin tener un color hardcodeado. Es la misma idea de "color por rol" del §4 aplicada a un drawable.</p>
+<div class="note warn">
+  <span class="lbl">Honestidad sobre una limitación</span>
+  El icono Bluetooth y su color son <strong>estáticos</strong>: no se ponen verdes al conectar, porque cambiar su tinte requeriría código en <code>MainActivity</code> y la consigna era no tocar el backend. El estado real igual se comunica por el <code>statusText</code> ("Connecté à…", "Déconnecté"). Si en el futuro se permite un cambio mínimo en Java, bastaría un <code>setColorFilter</code> sobre el ImageView para reflejar el estado.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="strings">7 · Strings y traducción al francés · <code>res/values/strings.xml</code></h2>
+<p>La cátedra insiste en no cablear textos en el layout (p.32 usa <code>android:text="@string/name"</code>). Movimos todos los textos visibles a <code>strings.xml</code>. Esto cumple dos objetivos: limpieza y, sobre todo, <strong>traducción</strong>.</p>
+<div class="filehdr"><span class="dot" style="background:#3fb950"></span> res/values/strings.xml <span class="tag">xml</span></div>
+<pre><code>&lt;<span class="t">string</span> <span class="f">name</span>=<span class="s">"title_app"</span>&gt;Luminosité adaptative&lt;/<span class="t">string</span>&gt;
+&lt;<span class="t">string</span> <span class="f">name</span>=<span class="s">"label_brightness"</span>&gt;Luminosité&lt;/<span class="t">string</span>&gt;
+&lt;<span class="t">string</span> <span class="f">name</span>=<span class="s">"status_disconnected"</span>&gt;Déconnecté&lt;/<span class="t">string</span>&gt;
+&lt;<span class="t">string</span> <span class="f">name</span>=<span class="s">"action_connect"</span>&gt;Connecter&lt;/<span class="t">string</span>&gt;
+&lt;<span class="t">string</span> <span class="f">name</span>=<span class="s">"label_auto_send"</span>&gt;Envoyer la luminosité automatiquement&lt;/<span class="t">string</span>&gt;</code></pre>
+
+<div class="note">
+  <span class="lbl">El camino correcto de localización (para la próxima)</span>
+  Lo ortodoxo en Android sería dejar el español en <code>values/strings.xml</code> (idioma por defecto) y crear <code>values-fr/strings.xml</code> para el francés — exactamente el mismo mecanismo de <em>qualifier</em> que <code>values-night</code> <a class="pdfref" href="#night">§4</a>, pero con código de idioma. Acá, como el requisito es que <strong>toda</strong> la app esté en francés, simplemente pusimos el francés como texto base. Si algún día se quisiera multi-idioma, se añade <code>values-es/</code> sin tocar el layout.
+</div>
+
+<h4>Los textos dinámicos viven en Java</h4>
+<p>Algunos textos no pueden estar en <code>strings.xml</code> porque se construyen en tiempo real (incluyen un valor o el nombre del dispositivo). Esos están en <code>MainActivity</code> y también se tradujeron — son literales, no lógica:</p>
+<pre><code>luxText.setText(String.format(<span class="s">"Lux : %.0f"</span>, lux));
+statusText.setText(<span class="s">"Connexion..."</span>);
+statusText.setText(<span class="s">"Connecté à "</span> + device.getName());
+toast(<span class="s">"Activez le Bluetooth"</span>);</code></pre>
+<p>Nota tipográfica: en francés se deja un espacio antes de <code>:</code> — por eso <code>"Lux : %.0f"</code> y no <code>"Lux:"</code>.</p>
+
+<!-- ============================================================ -->
+<h2 id="sensor">8 · Cómo la UI se conecta con el sensor</h2>
+<p>El rediseño es solo "la cara"; conviene ver cómo se llena de datos, porque ahí entra la otra mitad del PDF: los <strong>capteurs</strong>.</p>
+
+<h3>El sensor de luz <a class="pdfref">PDF · p.45, 55-57</a></h3>
+<p>La p.45 clasifica la luz (<em>éclairage</em>) como un <em>capteur environnemental</em>. La p.55-57 muestra el patrón exacto que usa esta app:</p>
+<ul>
+  <li><code>SensorManager</code> + <code>getDefaultSensor(Sensor.TYPE_LIGHT)</code> para obtener el sensor.</li>
+  <li>Registrar el listener en <code>onResume()</code> y quitarlo en <code>onPause()</code> — la cátedra lo muestra textual en la p.56. Es clave para no gastar batería cuando la app no está visible.</li>
+  <li><code>onSensorChanged(SensorEvent)</code> recibe los valores en <code>event.values[]</code> (p.57).</li>
+</ul>
+
+<div class="filehdr"><span class="dot" style="background:#f0883e"></span> MainActivity.java <span class="tag">java</span></div>
+<pre><code><span class="k">public</span> <span class="k">void</span> <span class="f">onSensorChanged</span>(<span class="t">SensorEvent</span> event) {
+    <span class="k">float</span> lux = event.values[<span class="n">0</span>];          <span class="c">// p.57: valores en values[]</span>
+    <span class="k">int</span> pct = <span class="f">luxToPercent</span>(lux);
+    luxText.setText(<span class="t">String</span>.format(<span class="s">"Lux : %.0f"</span>, lux));   <span class="c">// ← actualiza la UI</span>
+    brightnessText.setText(pct + <span class="s">" %"</span>);             <span class="c">// ← el número grande</span>
+    <span class="c">// … si el switch está activo, envía por Bluetooth</span>
+}</code></pre>
+<p>O sea: el sensor escribe directamente en los dos <code>TextView</code> que rediseñamos. <strong>El rediseño no cambió esta tubería</strong> — solo cambió cómo se ven esos dos textos (tamaño, color, ubicación en la tarjeta). Esa separación limpia entre "datos" (Java/sensor) y "presentación" (XML/recursos) es precisamente lo que permite rediseñar sin romper nada.</p>
+
+<pre class="diagram standalone">  SENSOR DE LUZ ──► onSensorChanged() ──► setText() ──► TextView (XML rediseñado)
+   (p.45,57)          (Java, intacto)                    (recursos, lo que tocamos)
+        └──────────────── backend ────────────────┘   └──── frontend ────┘</pre>
+
+<!-- ============================================================ -->
+<h2 id="dominar">9 · Para dominar el código (ejercicios)</h2>
+<p>Si querés tener control real sobre esto, probá estos cambios. Cada uno refuerza un concepto del PDF:</p>
+<ol>
+  <li><strong>Cambiá el color de marca.</strong> Editá solo <code>#4255A4</code> en <code>colors.xml</code> y mirá cómo cambian la tarjeta y el botón a la vez. → entendés la indirección de la p.36.</li>
+  <li><strong>Rompé el modo oscuro a propósito.</strong> Cambiá un <code>?attr/colorOnPrimaryContainer</code> por <code>@color/on_primary_container</code> (fijo) y observá cómo en modo oscuro el texto pierde contraste. → entendés <code>?attr/</code> vs <code>@color/</code>.</li>
+  <li><strong>Agregá una dimensión.</strong> Creá <code>res/values/dimens.xml</code> con <code>&lt;dimen name="gap"&gt;24dp&lt;/dimen&gt;</code> y usá <code>@dimen/gap</code> en los márgenes. → practica recursos de la p.34.</li>
+  <li><strong>Probá romper el contrato.</strong> Cambiá <code>&lt;Switch&gt;</code> por <code>&lt;com.google.android.material.materialswitch.MaterialSwitch&gt;</code> sin tocar Java y mirá el <code>ClassCastException</code> al abrir la app. → entendés §3 en carne propia (¡acordate de revertirlo!).</li>
+  <li><strong>Localizá de verdad.</strong> Movés el francés a <code>values-fr/strings.xml</code> y ponés español en <code>values/</code>; cambiá el idioma del emulador. → entendés los <em>qualifiers</em> de la p.34.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="archivos">10 · Mapa de archivos del rediseño</h2>
+<table>
+  <tr><th>Archivo</th><th>Rol</th><th>Concepto PDF</th></tr>
+  <tr><td><code>res/layout/activity_main.xml</code></td><td>Árbol de Views de la pantalla</td><td>p.28-32</td></tr>
+  <tr><td><code>res/values/colors.xml</code></td><td>Colores crudos (claro + oscuro)</td><td>p.35 (color/)</td></tr>
+  <tr><td><code>res/values/themes.xml</code></td><td>Asigna colores a tokens Material</td><td>p.36</td></tr>
+  <tr><td><code>res/values-night/themes.xml</code></td><td>Mismo tema, colores oscuros (qualifier)</td><td>p.34</td></tr>
+  <tr><td><code>res/values/strings.xml</code></td><td>Textos en francés</td><td>p.32, 36</td></tr>
+  <tr><td><code>res/drawable/ic_brightness.xml</code><br><code>res/drawable/ic_bluetooth.xml</code></td><td>Iconos vectoriales</td><td>p.35 (drawable/)</td></tr>
+  <tr><td><code>java/.../MainActivity.java</code></td><td>Lógica + textos dinámicos (solo literales traducidos)</td><td>p.12, 55-57</td></tr>
+</table>
+
+<div class="note ok">
+  <span class="lbl">En una frase</span>
+  El rediseño no es "programación": es <strong>configuración de recursos</strong>. Definimos colores y textos una vez, los conectamos al tema, y referenciamos todo por rol desde un layout declarativo — exactamente el flujo de las páginas 28 a 36 del PDF de la cátedra, sin tocar la lógica de los capteurs ni del Bluetooth.
+</div>
+
+</main>
+</div>
+</body>
+</html>

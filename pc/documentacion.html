@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brillo Adaptable Teléfono → PC · Documentación</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --bg-code: #0a0e14;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #d29922;
+    --danger: #f85149;
+    --kw: #ff7b72;
+    --str: #a5d6ff;
+    --com: #8b949e;
+    --fn: #d2a8ff;
+    --num: #79c0ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    font-size: 16px;
+  }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  nav.sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav .brand {
+    padding: 0 24px 16px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  nav .brand small { display: block; color: var(--muted); font-weight: 400; font-size: .78rem; margin-top: 4px; }
+  nav a {
+    display: block;
+    padding: 6px 24px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: .9rem;
+    border-left: 2px solid transparent;
+  }
+  nav a:hover { color: var(--text); background: rgba(88,166,255,.06); }
+  nav a.section { margin-top: 14px; color: var(--text); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+  nav a.sub { padding-left: 38px; font-size: .85rem; }
+
+  /* Main */
+  main {
+    flex: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 56px 120px;
+  }
+  h1 { font-size: 2.1rem; margin: 0 0 6px; line-height: 1.2; }
+  h1 + .subtitle { color: var(--muted); font-size: 1.1rem; margin: 0 0 28px; }
+  h2 {
+    font-size: 1.5rem;
+    margin: 56px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 24px;
+  }
+  h3 { font-size: 1.18rem; margin: 32px 0 10px; scroll-margin-top: 24px; }
+  h4 { font-size: 1rem; margin: 22px 0 8px; color: var(--accent); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  code:not(pre code) {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    padding: .1em .4em;
+    border-radius: 5px;
+    font-size: .86em;
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    color: #ffa657;
+  }
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* Code blocks */
+  .filehdr {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 14px;
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: .82rem;
+    color: var(--muted);
+  }
+  .filehdr .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .filehdr .tag { margin-left: auto; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 20px; background: rgba(88,166,255,.12); color: var(--accent); }
+  pre {
+    margin: 0 0 24px;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: .82rem;
+    line-height: 1.55;
+  }
+  pre.standalone { border-radius: 8px; margin-top: 4px; }
+  pre code { font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; color: #c9d1d9; }
+  .k { color: var(--kw); }
+  .s { color: var(--str); }
+  .c { color: var(--com); font-style: italic; }
+  .f { color: var(--fn); }
+  .n { color: var(--num); }
+  .t { color: #7ee787; }
+
+  /* Diagram block (monospace, no highlight) */
+  pre.diagram { color: var(--accent); background: #08111e; border-color: #1f3a5f; }
+
+  /* Callouts */
+  .note {
+    border-left: 4px solid var(--accent);
+    background: rgba(88,166,255,.07);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 18px 0;
+  }
+  .note.warn { border-color: var(--warn); background: rgba(210,153,34,.08); }
+  .note.danger { border-color: var(--danger); background: rgba(248,81,73,.08); }
+  .note.ok { border-color: var(--accent2); background: rgba(63,185,80,.08); }
+  .note .lbl { font-weight: 700; display: block; margin-bottom: 4px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: .9rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  th { background: var(--bg-soft); }
+  td code { font-size: .82em; }
+
+  /* hero meta cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px; margin: 24px 0; }
+  .card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .card .lab { color: var(--muted); font-size: .82rem; }
+
+  .pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.78rem; font-weight:600; }
+  .pill.green { background: rgba(63,185,80,.15); color: var(--accent2); }
+
+  @media (max-width: 900px) {
+    nav.sidebar { display: none; }
+    main { padding: 28px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="sidebar">
+  <div class="brand">💡 Brillo Adaptable<small>Teléfono → PC · Bluetooth</small></div>
+  <a href="#resumen" class="section">Resumen</a>
+  <a href="#arquitectura" class="sub">Arquitectura</a>
+  <a href="#flujo" class="sub">Flujo de datos</a>
+  <a href="#contrato" class="sub">El "contrato"</a>
+
+  <a href="#pc" class="section">Lado PC (Python)</a>
+  <a href="#backlight" class="sub">backlight.py</a>
+  <a href="#btserver" class="sub">bt_server.py ★</a>
+  <a href="#pruebas" class="sub">Scripts de prueba</a>
+  <a href="#gui" class="sub">control_panel.py (GUI)</a>
+
+  <a href="#android" class="section">Lado Android (Java)</a>
+  <a href="#manifest" class="sub">Manifest + UI</a>
+  <a href="#mainactivity" class="sub">MainActivity</a>
+
+  <a href="#decisiones" class="section">Decisiones técnicas</a>
+  <a href="#setup" class="section">Setup &amp; Ejecución</a>
+  <a href="#archivos" class="section">Mapa de archivos</a>
+  <a href="#estado" class="section">Estado &amp; pendientes</a>
+</nav>
+
+<main>
+
+<h1>Brillo Adaptable: Teléfono → PC</h1>
+<p class="subtitle">El sensor de luz ambiente de un Android controla el brillo de una PC Linux en tiempo real, por Bluetooth.</p>
+
+<p>
+  El teléfono tiene un <strong>sensor de luz ambiente</strong> real; la mayoría de las laptops
+  no exponen el suyo de forma usable. Este proyecto <em>"presta"</em> el sensor del teléfono
+  para darle <strong>brillo adaptable</strong> a la PC: más luz → pantalla más brillante; en
+  la oscuridad, se atenúa — todo con transiciones suaves.
+</p>
+
+<div class="cards">
+  <div class="card"><div class="big">SPP / RFCOMM</div><div class="lab">Transporte Bluetooth Classic (no BLE)</div></div>
+  <div class="card"><div class="big">log₁₀</div><div class="lab">Curva lux → brillo %</div></div>
+  <div class="card"><div class="big">Δ ≥ 3%</div><div class="lab">Throttle de envío</div></div>
+  <div class="card"><div class="big">sysfs</div><div class="lab">Escritura directa al backlight</div></div>
+</div>
+
+<div class="note ok">
+  <span class="lbl">✅ Estado: funciona end-to-end</span>
+  Sensor del teléfono → app → Bluetooth SPP → <code>bt_server.py</code> → brillo de la PC,
+  en tiempo real y con fade suave. GUI opcional para arrancar todo.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="resumen">Resumen</h2>
+
+<h3 id="arquitectura">Arquitectura</h3>
+<pre class="diagram standalone"><code>[Teléfono Android]                               [Linux PC]
+ Sensor de luz (lux)
+   → mapeo lux→brillo % (curva log)
+   → throttle (envía solo si Δ ≥ 3%)
+   → Bluetooth (RFCOMM / SPP) ───────────►  bt_server.py (perfil SPP por D-Bus)
+                                              → recibe "&lt;percent&gt;\n"
+                                              → fade suave del backlight
+                                              → escribe /sys/class/backlight/...</code></pre>
+
+<p>Cuatro decisiones de diseño definen el sistema:</p>
+<ol>
+  <li><strong>Transporte:</strong> Bluetooth Classic <strong>SPP/RFCOMM</strong> (no BLE). Es un canal tipo puerto serie, simple y robusto para teléfono↔PC.</li>
+  <li><strong>Pantalla a controlar:</strong> la <strong>pantalla interna de la laptop</strong> vía sysfs. Más confiable que <code>ddcutil</code> (que depende del DDC/CI del monitor y del cable).</li>
+  <li><strong>Mapeo lux→brillo:</strong> curva <strong>logarítmica</strong> recortada — ver fórmula abajo.</li>
+  <li><strong>Frecuencia de envío:</strong> enviar <strong>solo cuando el brillo calculado cambie ≥ 3%</strong>, no en cada lectura del sensor.</li>
+</ol>
+
+<h3 id="flujo">Flujo de datos completo</h3>
+<pre class="diagram standalone"><code>SENSOR DE LUZ (teléfono)
+   │  lux (ej. 350.0)
+   ▼
+MainActivity.onSensorChanged()          ── Java, hilo principal (UI)
+   │  luxToPercent(lux) → 62
+   │  ¿cambió ≥ 3% respecto al último enviado? sí
+   ▼
+send(62) → "62\n" por Bluetooth         ── Java, hilo de I/O (ExecutorService)
+   │
+   ▼  (RFCOMM / SPP, perfil Serial Port)
+   │
+bt_server.py  Profile1.NewConnection    ── Python, callback de BlueZ vía D-Bus
+   │  read_loop(): recibe "62\n", parsea 62
+   ▼
+backlight.fade_to(62)                   ── Python, hilo del cliente
+   │  interpola el valor RAW y lo escribe
+   ▼
+/sys/class/backlight/intel_backlight/brightness   ── el kernel cambia el brillo</code></pre>
+
+<h3 id="contrato">El "contrato" entre ambos lados</h3>
+<p>
+  La comunicación es deliberadamente trivial: <strong>una línea de texto por mensaje</strong>,
+  un número entero (el % de brillo) terminado en <code>\n</code>. Por ejemplo: <code>"75\n"</code>.
+</p>
+<ul>
+  <li><strong>UUID SPP estándar:</strong> <code>00001101-0000-1000-8000-00805F9B34FB</code></li>
+  <li>Trivial de generar en Java (<code>pct + "\n"</code>) y de parsear en Python (<code>int(float(line))</code>).</li>
+  <li>Se puede depurar a ojo en la consola del server.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="pc">Lado PC (Python, carpeta <code>pc/</code>)</h2>
+
+<p>El código de la PC se separa en dos capas independientes para poder probar cada una por su cuenta:</p>
+<ul>
+  <li><strong>Hardware</strong> (<code>backlight.py</code>): solo lee/escribe el brillo. No sabe nada de Bluetooth.</li>
+  <li><strong>Red</strong> (<code>bt_server.py</code>): recibe los porcentajes por Bluetooth y llama a la capa de hardware.</li>
+</ul>
+
+<!-- backlight -->
+<h3 id="backlight">2.1 · <code>backlight.py</code> — control físico del brillo</h3>
+<p>
+  Es la <strong>única parte que toca el hardware</strong>. Lee y escribe el brillo a través de
+  <code>sysfs</code>. Como no depende de Bluetooth, se puede probar de forma aislada.
+</p>
+<ul>
+  <li><code>_find_device()</code>: busca el dispositivo de backlight en <code>/sys/class/backlight/*</code> (aquí <code>intel_backlight</code>) y lo cachea.</li>
+  <li><code>get_max()</code>: lee <code>max_brightness</code> — el valor RAW máximo que entiende el kernel (en esta máquina, <strong>96000</strong>).</li>
+  <li><code>get_percent()</code>: lee el brillo actual y lo convierte a porcentaje.</li>
+  <li><code>set_percent(pct)</code>: convierte el % a RAW (<code>pct/100 · max</code>) y lo escribe. Cambio <strong>instantáneo</strong>. Recorta a 5–100 para no apagar la pantalla del todo.</li>
+  <li><code>fade_to(pct, ...)</code>: transición <strong>suave</strong>. Clave: interpola sobre el valor <strong>RAW</strong> (0–96000), no sobre el %, así aprovecha toda la resolución del backlight y no se ven escalones.</li>
+</ul>
+
+<div class="filehdr"><span class="dot" style="background:#3fb950"></span>pc/src/backlight.py<span class="tag">PC · hardware</span></div>
+<pre><code><span class="c">"""Control del brillo de la pantalla interna via sysfs (intel_backlight)."""</span>
+<span class="k">import</span> glob
+<span class="k">import</span> os
+<span class="k">import</span> time
+
+BACKLIGHT_DIR = <span class="k">None</span>
+
+
+<span class="k">def</span> <span class="f">_find_device</span>():
+    <span class="k">global</span> BACKLIGHT_DIR
+    <span class="k">if</span> BACKLIGHT_DIR:
+        <span class="k">return</span> BACKLIGHT_DIR
+    devs = glob.glob(<span class="s">"/sys/class/backlight/*"</span>)
+    <span class="k">if not</span> devs:
+        <span class="k">raise</span> RuntimeError(<span class="s">"No se encontro ningun dispositivo en /sys/class/backlight"</span>)
+    BACKLIGHT_DIR = devs[<span class="n">0</span>]
+    <span class="k">return</span> BACKLIGHT_DIR
+
+
+<span class="k">def</span> <span class="f">get_max</span>():
+    <span class="k">with</span> open(os.path.join(_find_device(), <span class="s">"max_brightness"</span>)) <span class="k">as</span> f:
+        <span class="k">return</span> int(f.read().strip())
+
+
+<span class="k">def</span> <span class="f">get_percent</span>():
+    dev = _find_device()
+    <span class="k">with</span> open(os.path.join(dev, <span class="s">"brightness"</span>)) <span class="k">as</span> f:
+        cur = int(f.read().strip())
+    <span class="k">return</span> round(cur / get_max() * <span class="n">100</span>)
+
+
+<span class="k">def</span> <span class="f">_write_raw</span>(raw):
+    <span class="k">with</span> open(os.path.join(_find_device(), <span class="s">"brightness"</span>), <span class="s">"w"</span>) <span class="k">as</span> f:
+        f.write(str(raw))
+
+
+<span class="k">def</span> <span class="f">set_percent</span>(pct):
+    <span class="c">"""Aplica un brillo en porcentaje (se recorta a 5..100), instantaneo."""</span>
+    pct = max(<span class="n">5</span>, min(<span class="n">100</span>, int(pct)))
+    _write_raw(round(pct / <span class="n">100</span> * get_max()))
+    <span class="k">return</span> pct
+
+
+<span class="k">def</span> <span class="f">fade_to</span>(pct, duration=<span class="n">0.4</span>, steps=<span class="n">60</span>):
+    <span class="c">"""Transicion suave desde el brillo actual hasta `pct` en `duration` seg.
+
+    Interpola sobre el valor RAW (no el %), asi aprovecha toda la resolucion
+    del backlight (max ~96000) y no se ven escalones.
+    """</span>
+    pct = max(<span class="n">5</span>, min(<span class="n">100</span>, int(pct)))
+    mx = get_max()
+    start = int(get_percent() / <span class="n">100</span> * mx)
+    target = round(pct / <span class="n">100</span> * mx)
+    <span class="k">if</span> start == target:
+        _write_raw(target)
+        <span class="k">return</span> pct
+    dt = duration / steps
+    <span class="k">for</span> i <span class="k">in</span> range(<span class="n">1</span>, steps + <span class="n">1</span>):
+        raw = round(start + (target - start) * i / steps)
+        _write_raw(raw)
+        time.sleep(dt)
+    <span class="k">return</span> pct</code></pre>
+
+<div class="note warn">
+  <span class="lbl">⚠ Permisos del backlight</span>
+  Escribir en <code>/sys/.../brightness</code> normalmente requiere root. Se resolvió con una
+  <strong>regla udev</strong> que hace el archivo del grupo <code>video</code> con permiso de escritura
+  (<code>g+w</code>), más agregar el usuario a ese grupo. Por eso el script cambia el brillo sin <code>sudo</code>.
+</div>
+
+<!-- bt_server -->
+<h3 id="btserver">2.2 · <code>bt_server.py</code> — servidor Bluetooth ★ (programa principal)</h3>
+<p>
+  Recibe los porcentajes del teléfono y los aplica llamando a <code>backlight.fade_to</code>.
+  Usa <strong>BlueZ a través de D-Bus</strong>, no PyBluez (que no compila en Python 3.14).
+</p>
+
+<h4>¿Cómo se anuncia el servicio?</h4>
+<ol>
+  <li><code>main()</code> crea el bucle de eventos GLib y se conecta al <strong>System Bus</strong> de D-Bus.</li>
+  <li>Instancia la clase <code>Profile</code> (un objeto D-Bus en <code>PROFILE_PATH</code>).</li>
+  <li>Llama a <code>ProfileManager1.RegisterProfile(...)</code> con el <strong>UUID de SPP</strong>, rol <code>server</code> y un canal. Al registrar el perfil, <strong>BlueZ anuncia el servicio por SDP</strong> — eso es lo que permite al teléfono descubrirlo y conectarse sin hacks de canal.</li>
+  <li>Arranca <code>GLib.MainLoop()</code> y queda esperando conexiones.</li>
+</ol>
+
+<h4>¿Qué pasa cuando el teléfono conecta?</h4>
+<p>
+  BlueZ invoca <code>Profile1.NewConnection(device, fd, properties)</code> y entrega un
+  <strong>file descriptor ya conectado</strong>. Se envuelve en un <code>socket</code> de Python y se
+  lanza un hilo <code>read_loop</code>.
+</p>
+
+<div class="note danger">
+  <span class="lbl">🔑 Detalle clave (bug sutil)</span>
+  El fd que entrega BlueZ viene en modo <strong>no-bloqueante</strong>. Hay que hacer
+  <code>sock.setblocking(True)</code> o <code>recv()</code> falla con <code>BlockingIOError</code>.
+</div>
+
+<p>
+  <code>read_loop()</code> acumula bytes en un buffer y los <strong>separa por <code>\n</code></strong>
+  — porque un solo <code>recv</code> puede traer varios mensajes pegados o uno partido. Por cada línea
+  parsea el entero y llama a <code>backlight.fade_to(pct, 0.3)</code>.
+</p>
+
+<div class="filehdr"><span class="dot" style="background:#58a6ff"></span>pc/src/bt_server.py<span class="tag">PC · programa principal</span></div>
+<pre><code><span class="c">"""Servidor Bluetooth SPP: recibe % de brillo del telefono y lo aplica.
+
+Registra un perfil Serial Port (SPP) en BlueZ via D-Bus (ProfileManager1).
+Asi el servicio queda anunciado por SDP y el telefono lo encuentra con
+createRfcommSocketToServiceRecord(SPP_UUID), sin hacks de canal.
+
+Cada mensaje es una linea de texto con un porcentaje entero ("75\n").
+
+Requisitos: python3-dbus, python3-gobject.
+Uso: python3 bt_server.py
+"""</span>
+<span class="k">import</span> os
+<span class="k">import</span> socket
+<span class="k">import</span> threading
+
+<span class="k">import</span> dbus
+<span class="k">import</span> dbus.mainloop.glib
+<span class="k">import</span> dbus.service
+<span class="k">from</span> gi.repository <span class="k">import</span> GLib
+
+<span class="k">import</span> backlight
+
+SPP_UUID = <span class="s">"00001101-0000-1000-8000-00805f9b34fb"</span>
+PROFILE_PATH = <span class="s">"/org/bluez/spp_brightness"</span>
+CHANNEL = <span class="n">22</span>
+
+
+<span class="k">def</span> <span class="f">read_loop</span>(sock, addr):
+    print(<span class="s">f"[+] Conectado: {addr}"</span>)
+    buf = <span class="s">b""</span>
+    <span class="k">try</span>:
+        <span class="k">while True</span>:
+            data = sock.recv(<span class="n">1024</span>)
+            <span class="k">if not</span> data:
+                <span class="k">break</span>
+            buf += data
+            <span class="k">while</span> <span class="s">b"\n"</span> <span class="k">in</span> buf:
+                line, buf = buf.split(<span class="s">b"\n"</span>, <span class="n">1</span>)
+                line = line.strip()
+                <span class="k">if not</span> line:
+                    <span class="k">continue</span>
+                <span class="k">try</span>:
+                    pct = int(float(line))
+                <span class="k">except</span> ValueError:
+                    print(<span class="s">f"    ignorado: {line!r}"</span>)
+                    <span class="k">continue</span>
+                applied = backlight.fade_to(pct, duration=<span class="n">0.3</span>)
+                print(<span class="s">f"    {pct:>3} -> {applied:>3}%"</span>)
+    <span class="k">finally</span>:
+        sock.close()
+        print(<span class="s">f"[-] Desconectado: {addr}"</span>)
+
+
+<span class="k">class</span> <span class="t">Profile</span>(dbus.service.Object):
+    <span class="f">@dbus.service.method</span>(<span class="s">"org.bluez.Profile1"</span>, in_signature=<span class="s">""</span>, out_signature=<span class="s">""</span>)
+    <span class="k">def</span> <span class="f">Release</span>(self):
+        print(<span class="s">"Profile.Release"</span>)
+
+    <span class="f">@dbus.service.method</span>(<span class="s">"org.bluez.Profile1"</span>, in_signature=<span class="s">"oha{sv}"</span>,
+                         out_signature=<span class="s">""</span>)
+    <span class="k">def</span> <span class="f">NewConnection</span>(self, device, fd, properties):
+        fd = fd.take()
+        sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM,
+                             socket.BTPROTO_RFCOMM, fileno=fd)
+        sock.setblocking(<span class="k">True</span>)   <span class="c"># el fd de BlueZ viene NO-bloqueante</span>
+        threading.Thread(target=read_loop, args=(sock, str(device)),
+                         daemon=<span class="k">True</span>).start()
+
+    <span class="f">@dbus.service.method</span>(<span class="s">"org.bluez.Profile1"</span>, in_signature=<span class="s">"o"</span>,
+                         out_signature=<span class="s">""</span>)
+    <span class="k">def</span> <span class="f">RequestDisconnection</span>(self, device):
+        print(<span class="s">f"RequestDisconnection: {device}"</span>)
+
+
+<span class="k">def</span> <span class="f">main</span>():
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=<span class="k">True</span>)
+    bus = dbus.SystemBus()
+    Profile(bus, PROFILE_PATH)
+
+    manager = dbus.Interface(
+        bus.get_object(<span class="s">"org.bluez"</span>, <span class="s">"/org/bluez"</span>),
+        <span class="s">"org.bluez.ProfileManager1"</span>)
+    opts = {
+        <span class="s">"Name"</span>: <span class="s">"Brillo SPP"</span>,
+        <span class="s">"Role"</span>: <span class="s">"server"</span>,
+        <span class="s">"Channel"</span>: dbus.UInt16(CHANNEL),
+        <span class="s">"RequireAuthentication"</span>: dbus.Boolean(<span class="k">False</span>),
+        <span class="s">"RequireAuthorization"</span>: dbus.Boolean(<span class="k">False</span>),
+    }
+    manager.RegisterProfile(PROFILE_PATH, SPP_UUID, opts)
+    print(<span class="s">f"Perfil SPP registrado (canal {CHANNEL}). Esperando conexion del telefono..."</span>)
+
+    loop = GLib.MainLoop()
+    <span class="k">try</span>:
+        loop.run()
+    <span class="k">except</span> KeyboardInterrupt:
+        print(<span class="s">"\nSaliendo."</span>)
+
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    main()</code></pre>
+
+<div class="note warn">
+  <span class="lbl">⚠ Correr con el Python del sistema</span>
+  Se ejecuta con <code>/usr/bin/python3</code> (el del sistema tiene los módulos <code>dbus</code> y
+  <code>gi</code>); el <code>venv</code> del proyecto <strong>no</strong> los tiene.
+</div>
+
+<!-- pruebas -->
+<h3 id="pruebas">2.3 · Scripts de prueba (no son parte del producto final)</h3>
+<p>Permiten validar el lado PC <strong>sin el teléfono</strong>. Todos terminan llamando a <code>backlight</code>.</p>
+<ul>
+  <li><strong><code>apply_brightness.py</code></strong>: lee porcentajes de <strong>stdin</strong> (uno por línea) y los aplica. Simula exactamente lo que hace el server (recibir un % y aplicarlo), pero por tubería en vez de Bluetooth.</li>
+  <li><strong><code>simulate.py</code></strong>: <strong>genera datos falsos</strong>. Modo barrido (100→5→100) o modo <code>--lux</code> (genera lux aleatorios y los pasa por la <strong>misma curva logarítmica</strong> que usa la app Android — sirve para mostrar que la curva está bien).</li>
+  <li><strong><code>manual.py</code></strong>: prueba <strong>interactiva</strong>. Escribís un % y la pantalla hace fade. Útil para demostrar <code>fade_to</code> en vivo.</li>
+</ul>
+
+<p>La <strong>curva logarítmica</strong> es el corazón del mapeo, idéntica en Python y en Java:</p>
+<pre class="diagram standalone"><code>brillo% = clamp( log10(lux + 1) / log10(5000) · 100 , 5 , 100 )</code></pre>
+<p>(lux ≈ 0 oscuro, ≈ 10.000+ sol directo; 5000 como tope práctico. La escala log refleja cómo el ojo y las pantallas responden a la luz.)</p>
+
+<div class="filehdr"><span class="dot" style="background:#8b949e"></span>pc/src/simulate.py<span class="tag">PC · prueba</span></div>
+<pre><code><span class="c">"""Genera datos de brillo simulados para probar la PC sin el telefono.
+
+Modo 1 (default): barrido de porcentajes 100 -> 5 -> 100.
+Modo 2 (--lux): genera lux aleatorios y los pasa por la curva logaritmica
+real (la misma que usara la app Android), imprimiendo el porcentaje.
+"""</span>
+<span class="k">import</span> math
+<span class="k">import</span> random
+<span class="k">import</span> sys
+<span class="k">import</span> time
+
+DELAY = <span class="n">0.03</span>  <span class="c"># segundos entre valores</span>
+
+
+<span class="k">def</span> <span class="f">lux_to_percent</span>(lux):
+    pct = math.log10(lux + <span class="n">1</span>) / math.log10(<span class="n">5000</span>) * <span class="n">100</span>
+    <span class="k">return</span> max(<span class="n">5</span>, min(<span class="n">100</span>, round(pct)))
+
+
+<span class="k">def</span> <span class="f">sweep</span>():
+    seq = list(range(<span class="n">100</span>, <span class="n">4</span>, -<span class="n">1</span>)) + list(range(<span class="n">5</span>, <span class="n">101</span>, <span class="n">1</span>))
+    <span class="k">for</span> pct <span class="k">in</span> seq:
+        print(pct, flush=<span class="k">True</span>)
+        time.sleep(DELAY)
+
+
+<span class="k">def</span> <span class="f">lux_mode</span>():
+    <span class="k">for</span> _ <span class="k">in</span> range(<span class="n">40</span>):
+        lux = random.choice([<span class="n">0</span>, <span class="n">5</span>, <span class="n">50</span>, <span class="n">200</span>, <span class="n">800</span>, <span class="n">3000</span>, <span class="n">10000</span>])
+        pct = lux_to_percent(lux)
+        print(pct, flush=<span class="k">True</span>)
+        print(<span class="s">f"  lux={lux:>6} -> {pct}%"</span>, file=sys.stderr)
+        time.sleep(DELAY)
+
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    <span class="k">if</span> <span class="s">"--lux"</span> <span class="k">in</span> sys.argv:
+        lux_mode()
+    <span class="k">else</span>:
+        sweep()</code></pre>
+
+<div class="filehdr"><span class="dot" style="background:#8b949e"></span>pc/src/apply_brightness.py<span class="tag">PC · prueba</span></div>
+<pre><code><span class="c">"""Lee porcentajes de brillo desde stdin (uno por linea) y los aplica.
+
+Esto simula lo que hara el servidor Bluetooth: cada linea de texto que llega
+es un porcentaje entero."""</span>
+<span class="k">import</span> sys
+<span class="k">import</span> backlight
+
+
+<span class="k">def</span> <span class="f">main</span>():
+    <span class="k">for</span> line <span class="k">in</span> sys.stdin:
+        line = line.strip()
+        <span class="k">if not</span> line:
+            <span class="k">continue</span>
+        <span class="k">try</span>:
+            pct = int(float(line))
+        <span class="k">except</span> ValueError:
+            print(<span class="s">f"  ignorado (no es numero): {line!r}"</span>, file=sys.stderr)
+            <span class="k">continue</span>
+        applied = backlight.set_percent(pct)
+        print(<span class="s">f"  recibido {pct:>3} -> aplicado {applied:>3}%"</span>)
+
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    main()</code></pre>
+
+<p><code>manual.py</code> es el equivalente interactivo: escribís un número y hace <code>fade_to</code>.</p>
+
+<!-- gui -->
+<h3 id="gui">2.4 · <code>gui/control_panel.py</code> — panel de control (PyQt6)</h3>
+<p>
+  Interfaz gráfica para no depender de la terminal. <strong>No reimplementa el server</strong>:
+  lo lanza como <strong>subproceso</strong> y muestra su salida. Esto evita el choque entre el
+  bucle de eventos de Qt y el de GLib (cada uno corre en su propio proceso).
+</p>
+<ul>
+  <li><code>find_server()</code>: localiza <code>bt_server.py</code> (primero relativo al script, ya que <code>gui/</code> y <code>src/</code> son hermanos).</li>
+  <li><strong>"Start server"</strong>: lanza <code>/usr/bin/python3 -u bt_server.py</code> con un <code>QProcess</code>. Usa el Python del sistema (que tiene <code>dbus</code>) sin importar con qué intérprete corra la GUI.</li>
+  <li><code>on_output()</code>: lee la salida del server línea por línea. Con una <strong>regex</strong> (<code>-&gt; NN%</code>) actualiza el número grande de brillo, y detecta <code>[+] Conectado</code> / <code>[-] Desconectado</code> para el estado.</li>
+  <li><strong>"Make discoverable for pairing"</strong>: corre <code>bluetoothctl</code> para dejar la PC visible y emparejable (solo la primera vez por teléfono).</li>
+  <li><code>closeEvent()</code>: detiene el server al cerrar la ventana.</li>
+</ul>
+
+<div class="filehdr"><span class="dot" style="background:#d2a8ff"></span>pc/gui/control_panel.py · (fragmentos clave)<span class="tag">PC · GUI</span></div>
+<pre><code><span class="c"># --- localizar el server: primero relativo a gui/ (hermano de src/) ---</span>
+_HERE = os.path.dirname(os.path.abspath(__file__))
+SERVER_CANDIDATES = [
+    os.path.normpath(os.path.join(_HERE, <span class="s">".."</span>, <span class="s">"src"</span>, <span class="s">"bt_server.py"</span>)),
+    os.path.join(HOME, <span class="s">"Documents/CAI/Android/pc/src/bt_server.py"</span>),
+    os.path.join(HOME, <span class="s">"Documents/CAI/pc/src/bt_server.py"</span>),
+]
+SYSTEM_PYTHON = <span class="s">"/usr/bin/python3"</span>
+BRIGHTNESS_RE = re.compile(<span class="s">r"->\s*(\d+)%"</span>)
+
+<span class="c"># --- arrancar el server como subproceso (evita choque Qt vs GLib) ---</span>
+<span class="k">def</span> <span class="f">start_server</span>(self):
+    self.proc = QProcess(self)
+    self.proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
+    self.proc.readyReadStandardOutput.connect(self.on_output)
+    self.proc.finished.connect(self.on_finished)
+    self.proc.start(SYSTEM_PYTHON, [<span class="s">"-u"</span>, self.server_path])
+    self.set_server_running(<span class="k">True</span>)
+
+<span class="c"># --- parsear la salida del server para alimentar la UI ---</span>
+<span class="k">def</span> <span class="f">on_output</span>(self):
+    text = bytes(self.proc.readAllStandardOutput()).decode(errors=<span class="s">"replace"</span>)
+    <span class="k">for</span> line <span class="k">in</span> text.splitlines():
+        self.log.append(line)
+        <span class="k">if</span> <span class="s">"[+] Conectado"</span> <span class="k">in</span> line:
+            self.connStatus.setText(<span class="s">"📱 Phone connected"</span>)
+        <span class="k">elif</span> <span class="s">"[-] Desconectado"</span> <span class="k">in</span> line:
+            self.connStatus.setText(<span class="s">"Disconnected"</span>)
+        m = BRIGHTNESS_RE.search(line)
+        <span class="k">if</span> m:
+            self.brightness.setText(m.group(<span class="n">1</span>) + <span class="s">" %"</span>)
+
+<span class="c"># --- hacer la PC visible/emparejable via bluetoothctl ---</span>
+<span class="k">def</span> <span class="f">make_discoverable</span>(self):
+    <span class="k">for</span> args <span class="k">in</span> ([<span class="s">"discoverable-timeout"</span>, <span class="s">"0"</span>],
+                 [<span class="s">"pairable"</span>, <span class="s">"on"</span>],
+                 [<span class="s">"discoverable"</span>, <span class="s">"on"</span>]):
+        QProcess.execute(<span class="s">"bluetoothctl"</span>, args)</code></pre>
+
+<!-- ============================================================ -->
+<h2 id="android">Lado Android (Java + XML)</h2>
+<div class="note">
+  <span class="lbl">ℹ Nota</span>
+  El código Android no está en este checkout de <code>pc/</code>, pero la documentación del compañero
+  lo describe. El proyecto vive en <code>Android/app/src/main/java/com/example/cai_app/</code>.
+</div>
+
+<h3 id="manifest">Manifest + UI</h3>
+<h4><code>AndroidManifest.xml</code> — permisos y capacidades</h4>
+<ul>
+  <li><code>BLUETOOTH_CONNECT</code> (Android 12 / API 31+): necesario para listar dispositivos emparejados y conectarse. Se pide <strong>en tiempo de ejecución</strong>.</li>
+  <li><code>BLUETOOTH</code> y <code>BLUETOOTH_ADMIN</code> con <code>maxSdkVersion=30</code>: equivalentes para Android 11 y anteriores (ahí se conceden al instalar).</li>
+  <li><code>&lt;uses-feature ... sensor.light&gt;</code>: declara que la app usa el sensor de luz.</li>
+</ul>
+
+<h4><code>res/layout/activity_main.xml</code> — la interfaz</h4>
+<ul>
+  <li><code>luxText</code>: lux actuales · <code>brightnessText</code>: % de brillo (número grande).</li>
+  <li><code>statusText</code>: estado de la conexión · <code>connectButton</code>: botón "Conectar".</li>
+  <li><code>sendSwitch</code>: interruptor "Enviar brillo automáticamente" (deshabilitado hasta que haya conexión).</li>
+</ul>
+
+<h3 id="mainactivity"><code>MainActivity.java</code> — sensor + cliente Bluetooth</h3>
+<p>Es el corazón de la app. Implementa <code>SensorEventListener</code>.</p>
+
+<h4>Sensor y curva</h4>
+<ul>
+  <li><code>onSensorChanged(event)</code>: toma <code>event.values[0]</code> (lux), calcula el %, actualiza la UI y, si corresponde, envía.</li>
+  <li><code>luxToPercent(lux)</code>: la misma curva logarítmica que <code>simulate.py</code>.</li>
+  <li><strong>Throttle:</strong> solo envía si <code>abs(pct - lastSentPct) ≥ 3</code>. <code>lastSentPct</code> empieza en <code>-100</code> para forzar el primer envío.</li>
+</ul>
+
+<h4>Bluetooth</h4>
+<ul>
+  <li><code>ensurePermissionThenConnect()</code>: valida que el Bluetooth esté encendido; si falta el permiso (Android 12+), lo pide; luego abre el selector.</li>
+  <li><code>pickDeviceAndConnect()</code>: lista los dispositivos <strong>emparejados</strong> (<code>getBondedDevices()</code>) en un diálogo.</li>
+  <li><code>connect(device)</code>: crea el socket con <code>createInsecureRfcommSocketToServiceRecord(SPP_UUID)</code> — esto hace una <strong>búsqueda SDP</strong> del servicio SPP que publica <code>bt_server.py</code> y se conecta al canal correcto.</li>
+  <li><code>send(pct)</code>: escribe <code>pct + "\n"</code> en el <code>OutputStream</code>.</li>
+</ul>
+
+<div class="note">
+  <span class="lbl">🧵 Modelo de hilos</span>
+  El <strong>sensor y la UI</strong> corren en el hilo principal. <strong>Toda la red Bluetooth</strong>
+  (conectar, enviar) corre en un <code>ExecutorService</code> de un solo hilo, para no bloquear la UI.
+  Para volver a tocar la UI desde ese hilo se usa un <code>Handler</code> del hilo principal (<code>main.post(...)</code>).
+</div>
+
+<!-- ============================================================ -->
+<h2 id="decisiones">Decisiones técnicas clave</h2>
+<p>Lo que hay que saber para <em>defender</em> el proyecto:</p>
+<table>
+  <tr><th>Decisión</th><th>Por qué</th></tr>
+  <tr><td><strong>Protocolo de texto plano</strong> (<code>"&lt;pct&gt;\n"</code>)</td><td>Trivial de depurar (se ve en la consola) y de generar/parsear. Alternativa binaria sería opaca.</td></tr>
+  <tr><td><strong>Curva logarítmica</strong> (no lineal)</td><td>La luz ambiente abarca varios órdenes de magnitud (~0 a &gt;10000 lux); el ojo y las pantallas responden de forma logarítmica, así el mapeo se siente natural.</td></tr>
+  <tr><td><strong>Throttle del 3%</strong></td><td>El sensor dispara muchísimas lecturas; enviar todas saturaría el enlace. Solo importan los cambios perceptibles.</td></tr>
+  <tr><td><strong>Fade interpolando el RAW</strong></td><td>Transiciones suaves sin escalones visibles (usa toda la resolución 0–96000, no los 100 pasos del %).</td></tr>
+  <tr><td><strong>SPP por SDP (D-Bus)</strong>, no canal fijo por reflexión</td><td>El canal RFCOMM fijo con la API oculta de Android era inestable ("read failed…"). Publicar el servicio y dejar que Android lo descubra por SDP es el método estándar y confiable.</td></tr>
+  <tr><td><strong>Sockets BT nativos + BlueZ/D-Bus</strong></td><td>PyBluez no compila en Python 3.14; la stdlib (<code>AF_BLUETOOTH</code>) + D-Bus cubren todo sin dependencias frágiles.</td></tr>
+</table>
+
+<div class="note danger">
+  <span class="lbl">🛣 El camino recorrido (importante para entender el código)</span>
+  <strong>Opción A descartada:</strong> canal fijo 1 + <code>createRfcommSocket(1)</code> por reflexión, SIN SDP.
+  El teléfono daba <em>"read failed, socket might be closed or timeout"</em>; el <code>connect()</code> no
+  llegaba al server.<br><br>
+  <strong>Opción B adoptada (funciona):</strong> registrar SPP por D-Bus → el teléfono lo descubre con
+  <code>createInsecureRfcommSocketToServiceRecord(SPP_UUID)</code>.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="setup">Setup &amp; Ejecución</h2>
+
+<h4>1 · PC — instalar dependencias</h4>
+<pre class="standalone"><code>sudo dnf install bluez python3-dbus python3-gobject</code></pre>
+
+<h4>2 · PC — permitir escribir el backlight sin root</h4>
+<pre class="standalone"><code>echo 'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"' | sudo tee /etc/udev/rules.d/90-backlight.rules
+sudo usermod -aG video $USER       # log out / log in después
+sudo chgrp video /sys/class/backlight/*/brightness
+sudo chmod g+w  /sys/class/backlight/*/brightness</code></pre>
+
+<h4>3 · Emparejar el teléfono con la PC</h4>
+<pre class="standalone"><code>bluetoothctl
+# dentro: power on / agent on / default-agent / pairable on / discoverable on</code></pre>
+<p>Luego, en el teléfono, abrir Bluetooth, encontrar la PC (nombre del adaptador, ej. "fedora") y emparejar.</p>
+
+<h4>4 · Ejecutar — Opción A: GUI (recomendada)</h4>
+<pre class="standalone"><code>pip install PyQt6                 # una vez, dentro del venv
+python pc/gui/control_panel.py</code></pre>
+<p>Click <strong>Start server</strong>, luego conectar desde el teléfono.</p>
+
+<h4>4 · Ejecutar — Opción B: terminal</h4>
+<pre class="standalone"><code>cd pc/src && /usr/bin/python3 bt_server.py
+# imprime: "Perfil SPP registrado ... Esperando conexion del telefono..."</code></pre>
+<p>Abrir la app, tap <strong>Conectar</strong>, elegir la PC y activar <strong>Enviar brillo automáticamente</strong>. Cubrir/descubrir el sensor → el brillo de la PC sigue.</p>
+
+<h4>Probar el lado PC sin el teléfono</h4>
+<pre class="standalone"><code>cd pc/src
+python3 manual.py                                       # escribí un % y mirá el fade
+python3 simulate.py | python3 apply_brightness.py       # barrido automático
+python3 simulate.py --lux | python3 apply_brightness.py # simular lux reales</code></pre>
+
+<!-- ============================================================ -->
+<h2 id="archivos">Mapa de archivos</h2>
+<table>
+  <tr><th>Archivo</th><th>Lado</th><th>Rol</th></tr>
+  <tr><td><code>pc/src/backlight.py</code></td><td>PC</td><td>Lee/escribe el brillo (sysfs), con fade</td></tr>
+  <tr><td><code>pc/src/bt_server.py</code></td><td>PC</td><td><strong>Servidor Bluetooth SPP</strong> (programa principal)</td></tr>
+  <tr><td><code>pc/src/apply_brightness.py</code></td><td>PC</td><td>Prueba: aplica % desde stdin</td></tr>
+  <tr><td><code>pc/src/simulate.py</code></td><td>PC</td><td>Prueba: genera datos (curva log)</td></tr>
+  <tr><td><code>pc/src/manual.py</code></td><td>PC</td><td>Prueba: interactivo</td></tr>
+  <tr><td><code>pc/gui/control_panel.py</code></td><td>PC</td><td>GUI PyQt6: inicia/detiene el server con botones</td></tr>
+  <tr><td><code>Android/.../AndroidManifest.xml</code></td><td>Android</td><td>Permisos y feature del sensor</td></tr>
+  <tr><td><code>Android/.../activity_main.xml</code></td><td>Android</td><td>Interfaz</td></tr>
+  <tr><td><code>Android/.../MainActivity.java</code></td><td>Android</td><td>Sensor + cliente Bluetooth</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="estado">Estado &amp; pendientes</h2>
+<p><span class="pill green">✅ FUNCIONA END-TO-END</span></p>
+<p>Sensor del teléfono → app → Bluetooth SPP → <code>bt_server.py</code> → brillo de la PC sigue la luz ambiente en tiempo real, con fade suave.</p>
+
+<h4>Pendiente / futuro</h4>
+<ul>
+  <li><strong>Reconexión automática</strong> si se cae el socket.</li>
+  <li><strong>Foreground Service</strong> en Android: sin él, el socket se corta al minimizar la app.</li>
+  <li><strong>Autostart</strong> del server en la PC con <code>systemd --user</code>.</li>
+  <li>Pulir la curva y hacer la GUI más linda.</li>
+  <li><strong>Monitor externo:</strong> usar <code>ddcutil setvcp 10 N</code> (requiere <code>i2c-dev</code> y grupo <code>i2c</code>).</li>
+</ul>
+
+<h4>Riesgos conocidos</h4>
+<ul>
+  <li><strong>PyBluez NO sirve</strong> (Python 3.14) → se usan sockets stdlib <code>AF_BLUETOOTH</code> (ya resuelto).</li>
+  <li><strong>Sin SDP</strong>, apps de terminal Bluetooth genéricas no descubren el servicio.</li>
+  <li><strong>Android 12+:</strong> sin permisos runtime, el Bluetooth falla en silencio.</li>
+  <li><strong>Background:</strong> sin Foreground Service, el socket se corta al minimizar.</li>
+</ul>
+
+<hr>
+<p style="color:var(--muted);font-size:.85rem;text-align:center">
+  Documentación generada a partir de <code>README.md</code>, <code>PLANNING.md</code>, <code>CODE.md</code>
+  y el código fuente en <code>pc/</code>. · Adaptador BT: <code>F4:6D:3F:33:A3:96</code> (fedora)
+</p>
+
+</main>
+</div>
+</body>
+</html>
