@@ -3,8 +3,10 @@ package com.example.cai_app;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -14,7 +16,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,15 +29,18 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -87,14 +97,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 new ActivityResultContracts.RequestPermission(),
                 granted -> {
                     if (granted) pickDeviceAndConnect();
-                    else toast("Permiso Bluetooth denegado");
+                    else toast("Permission Bluetooth refusée");
                 });
 
         connectButton.setOnClickListener(v -> ensurePermissionThenConnect());
         sendSwitch.setOnCheckedChangeListener((b, checked) -> sending = checked);
 
         if (lightSensor == null) {
-            luxText.setText("Este dispositivo no tiene sensor de luz");
+            luxText.setText("Cet appareil n'a pas de capteur de lumière");
         }
     }
 
@@ -125,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent event) {
         float lux = event.values[0];
         int pct = luxToPercent(lux);
-        luxText.setText(String.format("Lux: %.0f", lux));
+        luxText.setText(String.format("Lux : %.0f", lux));
         brightnessText.setText(pct + " %");
 
         if (sending && out != null && Math.abs(pct - lastSentPct) >= THRESHOLD) {
@@ -151,33 +161,85 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void ensurePermissionThenConnect() {
-        if (btAdapter == null) { toast("Bluetooth no disponible"); return; }
-        if (!btAdapter.isEnabled()) { toast("Activa el Bluetooth"); return; }
+        if (btAdapter == null) { toast("Bluetooth non disponible"); return; }
+        if (!btAdapter.isEnabled()) { toast("Activez le Bluetooth"); return; }
         if (hasConnectPermission()) pickDeviceAndConnect();
         else requestConnect.launch(Manifest.permission.BLUETOOTH_CONNECT);
     }
 
     @SuppressLint("MissingPermission")
     private void pickDeviceAndConnect() {
-        Set<BluetoothDevice> bonded = btAdapter.getBondedDevices();
-        if (bonded.isEmpty()) {
-            toast("Emparejá la PC primero desde Ajustes de Bluetooth");
+        List<BluetoothDevice> devices = connectableDevices(btAdapter.getBondedDevices());
+        if (devices.isEmpty()) {
+            toast("Associez d'abord le PC dans les paramètres Bluetooth");
             return;
         }
-        List<BluetoothDevice> devices = new ArrayList<>(bonded);
-        String[] names = new String[devices.size()];
-        for (int i = 0; i < devices.size(); i++) {
-            names[i] = devices.get(i).getName() + "\n" + devices.get(i).getAddress();
-        }
-        new AlertDialog.Builder(this)
-                .setTitle("Elegí la PC")
-                .setItems(names, (d, which) -> connect(devices.get(which)))
+        DeviceAdapter adapter = new DeviceAdapter(this, devices);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Choisissez l'ordinateur")
+                .setAdapter(adapter, (d, which) -> connect(devices.get(which)))
+                .setNegativeButton("Annuler", null)
                 .show();
+    }
+
+    /**
+     * Filtra los dispositivos vinculados para mostrar solo los relevantes:
+     * descarta los que no tienen nombre legible (solo MAC), elimina duplicados
+     * por dirección y prioriza las computadoras (el destino de la app). Si no hay
+     * ninguna computadora vinculada, devuelve igual el resto para no quedar vacío.
+     */
+    @SuppressLint("MissingPermission")
+    private List<BluetoothDevice> connectableDevices(Set<BluetoothDevice> bonded) {
+        List<BluetoothDevice> computers = new ArrayList<>();
+        List<BluetoothDevice> others = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (BluetoothDevice d : bonded) {
+            String name = d.getName();
+            if (name == null || name.trim().isEmpty()) continue;   // solo MAC, no sirve
+            if (!seen.add(d.getAddress())) continue;               // duplicado
+            if (isComputer(d)) computers.add(d);
+            else others.add(d);
+        }
+        return computers.isEmpty() ? others : computers;
+    }
+
+    private static boolean isComputer(BluetoothDevice d) {
+        BluetoothClass cls = d.getBluetoothClass();
+        return cls != null
+                && cls.getMajorDeviceClass() == BluetoothClass.Device.Major.COMPUTER;
+    }
+
+    /** Lista cada dispositivo con icono, nombre y dirección (item_device.xml). */
+    private static class DeviceAdapter extends ArrayAdapter<BluetoothDevice> {
+        DeviceAdapter(Context context, List<BluetoothDevice> items) {
+            super(context, 0, items);
+        }
+
+        @SuppressLint("MissingPermission")
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+            View row = convertView;
+            if (row == null) {
+                row = LayoutInflater.from(getContext())
+                        .inflate(R.layout.item_device, parent, false);
+            }
+            BluetoothDevice d = getItem(position);
+            ImageView icon = row.findViewById(R.id.deviceIcon);
+            TextView name = row.findViewById(R.id.deviceName);
+            TextView address = row.findViewById(R.id.deviceAddress);
+
+            name.setText(d.getName());
+            address.setText(d.getAddress());
+            icon.setImageResource(isComputer(d)
+                    ? R.drawable.ic_computer : R.drawable.ic_bluetooth);
+            return row;
+        }
     }
 
     @SuppressLint("MissingPermission")
     private void connect(BluetoothDevice device) {
-        statusText.setText("Conectando...");
+        statusText.setText("Connexion...");
         io.execute(() -> {
             try {
                 closeSocket();
@@ -187,13 +249,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 out = s.getOutputStream();
                 lastSentPct = -100;
                 main.post(() -> {
-                    statusText.setText("Conectado a " + device.getName());
+                    statusText.setText("Connecté à " + device.getName());
                     sendSwitch.setEnabled(true);
                 });
             } catch (Exception e) {
                 closeSocket();
                 main.post(() -> {
-                    statusText.setText("Error: " + e.getMessage());
+                    statusText.setText("Erreur : " + e.getMessage());
                     sendSwitch.setEnabled(false);
                     sendSwitch.setChecked(false);
                 });
@@ -209,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             } catch (Exception e) {
                 closeSocket();
                 main.post(() -> {
-                    statusText.setText("Desconectado");
+                    statusText.setText("Déconnecté");
                     sendSwitch.setEnabled(false);
                     sendSwitch.setChecked(false);
                 });

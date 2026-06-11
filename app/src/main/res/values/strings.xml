@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">cai_app</string>
+
+    <string name="title_app">Luminosité adaptative</string>
+    <string name="subtitle_app">Ajuste la luminosité du PC selon la lumière ambiante</string>
+
+    <string name="label_brightness">Luminosité</string>
+    <string name="placeholder_percent">–– %</string>
+    <string name="placeholder_lux">Lux : ––</string>
+
+    <string name="status_disconnected">Déconnecté</string>
+    <string name="action_connect">Connecter</string>
+    <string name="label_auto_send">Envoyer la luminosité automatiquement</string>
 </resources>
